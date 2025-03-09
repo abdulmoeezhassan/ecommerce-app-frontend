@@ -70,10 +70,18 @@ export default function SignIn() {
         responseData?.user?.accessToken
       );
       await AsyncStorage.setItem("user_id", responseData?.user?._id);
+      await AsyncStorage.setItem("role", responseData?.user?.role);
 
       signIn();
       setLoading(false);
-      router.replace("/");
+
+      if (responseData?.user?.role === "Supplier") {
+        router.push("/(app)/(drawer)/(supplier-tabs)" as any);
+      } else if (responseData?.user?.role === "Admin") {
+        router.replace("/(app)/(drawer)/(admin-tabs)" as any);
+      } else {
+        router.replace("/(app)/(drawer)/(tabs)" as any);
+      }
 
       Toast.show({
         type: "success",

@@ -85,7 +85,7 @@ export default function Layout() {
       drawerContent={(props) => <CustomDrawerContent {...props} />}
       screenOptions={{ headerShown: false }}
     >
-     <Drawer.Screen
+      <Drawer.Screen
         name="index"
         options={{
           headerShown: true,
@@ -95,8 +95,26 @@ export default function Layout() {
         }}
       />
 
-     <Drawer.Screen
+      <Drawer.Screen
         name="(tabs)"
+        options={{
+          headerShown: true,
+          title: "Home",
+          headerStyle: { backgroundColor: "white" },
+          headerTintColor: "black",
+        }}
+      />
+      <Drawer.Screen
+        name="(admin-tabs)"
+        options={{
+          headerShown: true,
+          title: "Home",
+          headerStyle: { backgroundColor: "white" },
+          headerTintColor: "black",
+        }}
+      />
+      <Drawer.Screen
+        name="(supplier-tabs)"
         options={{
           headerShown: true,
           title: "Home",

@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { Picker } from "@react-native-picker/picker";
 import userService from "@/services/user-service/user-service";
 import { Dimensions } from "react-native";
 import Toast from "react-native-toast-message";
@@ -34,6 +35,7 @@ export default function Signup() {
       email: "",
       password: "",
       confirmPassword: "",
+      role: "",
     },
   });
   const [submittedData, setSubmittedData] = useState(null);
@@ -204,36 +206,26 @@ export default function Signup() {
 
           <Controller
             control={control}
-            name="email"
-            rules={{
-              required: "Email is required",
-              pattern: { value: /^\S+@\S+$/i, message: "Invalid email format" },
-            }}
-            render={({ field: { onChange, value, onBlur } }) => (
-              <TextInput
-                style={[
-                  styles.input,
-                  // focusedInput === "email" && styles.inputFocused,
-                  errors.email && styles.inputError,
-                ]}
-                placeholder="Email"
-                value={value}
-                className="focus:outline-none focus:border-gray-900"
-                onChange={() => setFocusedInput("email")}
-                onChangeText={(text) => {
-                  onChange(text);
-                  trigger("email");
-                }}
-                keyboardType="email-address"
-                onBlur={onBlur}
-              />
+            name="role"
+            rules={{ required: "Role is required" }}
+            render={({ field: { onChange, value } }) => (
+              <View>
+                <Picker
+                  selectedValue={value}
+                  onValueChange={(itemValue) => onChange(itemValue)}
+                  className="focus:outline-none focus:border-gray-900"
+                  style={[styles.dropdown, errors.role && styles.inputError]}
+                >
+                  <Picker.Item label="User" value="User" />
+                  <Picker.Item label="Seller" value="Seller" />
+                </Picker>
+              </View>
             )}
           />
-          {errors.email && (
-            <Text style={[styles.errorText]}>
-              {String(errors.email.message)}
-            </Text>
+          {errors.role && (
+            <Text style={styles.errorText}>{String(errors.role.message)}</Text>
           )}
+
 
           <Controller
             control={control}
@@ -414,6 +406,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ccc",
     padding: 10,
+    borderRadius: 5,
+    marginBottom: 15,
+    backgroundColor: "#fff",
+  },
+  dropdown: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 7,
     borderRadius: 5,
     marginBottom: 15,
     backgroundColor: "#fff",

@@ -68,15 +68,62 @@ const CustomDrawerContent = (props) => {
   );
 };
 
+function BackButton() {
+  return (
+    <AntDesign
+      className="m-5"
+      name="arrowleft"
+      size={24}
+      onPress={() => router.back()}
+    />
+  );
+}
+
 export default function Layout() {
   return (
     <Drawer
       drawerContent={(props) => <CustomDrawerContent {...props} />}
       screenOptions={{ headerShown: false }}
     >
-      <Drawer.Screen name="(tabs)" options={{ headerShown: true }} />
-      <Drawer.Screen name="settings" options={{ headerShown: true }} />
-      <Drawer.Screen name="profile" options={{ headerShown: true }} />
+     <Drawer.Screen
+        name="index"
+        options={{
+          headerShown: true,
+          title: "Home",
+          headerStyle: { backgroundColor: "white" },
+          headerTintColor: "black",
+        }}
+      />
+
+     <Drawer.Screen
+        name="(tabs)"
+        options={{
+          headerShown: true,
+          title: "Home",
+          headerStyle: { backgroundColor: "white" },
+          headerTintColor: "black",
+        }}
+      />
+      <Drawer.Screen
+        name="settings"
+        options={{
+          headerShown: true,
+          headerLeft: () => BackButton(),
+          title: "Settings",
+          headerStyle: { backgroundColor: "white" },
+          headerTintColor: "black",
+        }}
+      />
+      <Drawer.Screen
+        name="profile"
+        options={{
+          headerShown: true,
+          headerLeft: () => BackButton(),
+          title: "Profile",
+          headerStyle: { backgroundColor: "white" },
+          headerTintColor: "black",
+        }}
+      />
     </Drawer>
   );
 }

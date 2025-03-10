@@ -15,6 +15,12 @@ export default function HomePage() {
       <Link href={"/sign-out"} asChild>
         <Button title="Go to Blog Page" />
       </Link>
+      <Link href={"/product-detail"} asChild>
+        <Button title="Go to product detail Page" />
+      </Link>
+      <Link href={"/order-confirm"} asChild>
+        <Button title="Go to Order Confirm Page" />
+      </Link>
       <Link href={"(drawer)"} asChild>
         <Button title="Go to Tabs" />
       </Link>

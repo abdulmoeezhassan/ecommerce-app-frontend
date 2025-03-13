@@ -21,7 +21,11 @@ export default function HomePage() {
       <Link href={"/order-confirm"} asChild>
         <Button title="Go to Order Confirm Page" />
       </Link>
-      <Link href={"(drawer)"} asChild>
+
+      <Link href={"/products-listing"} asChild>
+        <Button title="Go to Product Listing Page" />
+      </Link>
+      <Link href={"/(app)/(drawer)/(tabs)"} asChild>
         <Button title="Go to Tabs" />
       </Link>
     </View>

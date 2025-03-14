@@ -12,17 +12,22 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useCart } from '../../components/cartcontext';  // Import the useCart hook
+import NavigationHeader from './navigation-header'; // Import NavigationHeader
 
 const { width } = Dimensions.get('window');
 
 const ProductDetail = () => {
   const navigation = useNavigation();
+  const { addToCart } = useCart();  // Use the addToCart function from the context
+
   const [selectedColor, setSelectedColor] = useState('red');
   const [selectedSize, setSelectedSize] = useState('S');
   const [quantity, setQuantity] = useState(1);
   const [selectedQuality, setSelectedQuality] = useState('237.34');
   const [showQualityOptions, setShowQualityOptions] = useState(false);
-// sample data options
+
+  // Sample data options
   const colors = [
     { id: 'red', color: '#FF0000' },
     { id: 'blue', color: '#72B4C2' },
@@ -41,10 +46,6 @@ const ProductDetail = () => {
     { id: '237.34', label: '237.34' },
     { id: '250.00', label: '250.00' },
   ];
-
-  const handleGoBack = () => {
-    navigation.goBack();
-  };
 
   const increaseQuantity = () => {
     setQuantity(quantity + 1);
@@ -65,39 +66,33 @@ const ProductDetail = () => {
     setShowQualityOptions(false);
   };
 
+  // Handle Add to Cart
+  const handleAddToCart = () => {
+    const product = {
+      id: `${selectedColor}-${selectedSize}-${selectedQuality}`,
+      name: `Product ${selectedColor} ${selectedSize}`,
+      color: selectedColor,
+      size: selectedSize,
+      quality: selectedQuality,
+      price: parseFloat(selectedQuality), // Assuming price is the same as quality
+      quantity,
+    };
+
+    addToCart(product); // Adding product to the cart using context
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#ffffff" barStyle="dark-content" />
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={handleGoBack}>
-            <Ionicons name="chevron-back" size={24} color="black" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Preview</Text>
-          <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.iconContainer}>
-              <Ionicons name="search-outline" size={22} color="black" />
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.iconContainer, styles.bagIcon]}>
-              <Ionicons name="bag-outline" size={22} color="black" />
-              <View style={styles.bagBadge}>
-                <Text style={styles.bagBadgeText}>1</Text>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity>
-              <Image
-                source={{ uri: 'https://randomuser.me/api/portraits/men/32.jpg' }}
-                style={styles.profileImage}
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
+      
+      {/* Add Navigation Header here */}
+      <NavigationHeader title="Product Details" />
 
+      <ScrollView showsVerticalScrollIndicator={false}>
         {/* Product Image */}
         <View style={styles.imageContainer}>
           <Image
-            source={{ uri: 'https://s3-alpha-sig.figma.com/img/2536/4fa7/5335fdf391d9229fda9ae943da540bf0?Expires=1742774400&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=axuJF9Hz0TLrPB4eHsZrFK5~fngwZxumNQbf4g2VXWZDxhWWXP~jB9CZ7-MiuefXbz-wzi3chDodf1pmQ0KYWy~bUrOneo7~Zc9J4F4JgaT4~~xu~KmMFyeLW6RCXCCjYa2Yns8-cNaodZf8N9zR2dem0LI-dn~7P8CSYX0QAPshjmaL-oNIQKZwG3Cd4TuYdRj09DqwWBnGgvJvmkjKbXrFpR5e59g8cEqTywvhDhUF0sli6IctWlpUAnwDYj1heiR-hXWb2CNJ7KQ0hTnHkA1wtOFJvYl3-USxmYbrkWzM7JFURY-awPhon8rPX1TCXkZF4AUae~QEVGGaASfa2w__' }}
+            source={{ uri: 'https://s3-alpha-sig.figma.com/img/2536/4fa7/5335fdf391d9229fda9ae943da540bf0' }}
             style={styles.productImage}
             resizeMode="cover"
           />
@@ -112,11 +107,7 @@ const ProductDetail = () => {
               {colors.map((item) => (
                 <TouchableOpacity
                   key={item.id}
-                  style={[
-                    styles.colorCircle,
-                    { backgroundColor: item.color },
-                    selectedColor === item.id && styles.selectedColorBorder,
-                  ]}
+                  style={[styles.colorCircle, { backgroundColor: item.color }, selectedColor === item.id && styles.selectedColorBorder]}
                   onPress={() => setSelectedColor(item.id)}
                 />
               ))}
@@ -127,38 +118,28 @@ const ProductDetail = () => {
           <View style={styles.optionRow}>
             <Text style={styles.optionLabel}>Select Quality</Text>
             <View style={styles.quantityContainer}>
-              <TouchableOpacity 
-                style={styles.decreaseButton} 
-                onPress={decreaseQuantity}
-              >
+              <TouchableOpacity style={styles.decreaseButton} onPress={decreaseQuantity}>
                 <Text style={styles.quantityButtonText}>-</Text>
               </TouchableOpacity>
               <View style={styles.quantityValue}>
                 <Text>{quantity}</Text>
               </View>
-              <TouchableOpacity 
-                style={styles.increaseButton} 
-                onPress={increaseQuantity}
-              >
+              <TouchableOpacity style={styles.increaseButton} onPress={increaseQuantity}>
                 <Text style={styles.quantityButtonText}>+</Text>
               </TouchableOpacity>
             </View>
           </View>
-         
 
           {/* Chosen Quality */}
           <View style={styles.optionRow}>
-            <Text style={styles.optionLabel}>Chose cloth Quality</Text>
+            <Text style={styles.optionLabel}>Chose Cloth Quality</Text>
             <View style={styles.qualitySelectorContainer}>
               {showQualityOptions && (
                 <View style={styles.qualityDropdown}>
                   {qualityOptions.map((option) => (
                     <TouchableOpacity
                       key={option.id}
-                      style={[
-                        styles.qualityOption,
-                        selectedQuality === option.id && styles.selectedQualityOption
-                      ]}
+                      style={[styles.qualityOption, selectedQuality === option.id && styles.selectedQualityOption]}
                       onPress={() => selectQuality(option.id)}
                     >
                       <Text style={styles.qualityOptionText}>{option.label}</Text>
@@ -166,10 +147,7 @@ const ProductDetail = () => {
                   ))}
                 </View>
               )}
-              <TouchableOpacity 
-                style={styles.qualitySelector}
-                onPress={toggleQualityOptions}
-              >
+              <TouchableOpacity style={styles.qualitySelector} onPress={toggleQualityOptions}>
                 <Text style={styles.qualityValue}>{selectedQuality}</Text>
               </TouchableOpacity>
             </View>
@@ -182,18 +160,10 @@ const ProductDetail = () => {
               {sizes.map((item) => (
                 <TouchableOpacity
                   key={item.id}
-                  style={[
-                    styles.sizeCircle,
-                    selectedSize === item.id && styles.selectedSize,
-                  ]}
+                  style={[styles.sizeCircle, selectedSize === item.id && styles.selectedSize]}
                   onPress={() => setSelectedSize(item.id)}
                 >
-                  <Text
-                    style={[
-                      styles.sizeText,
-                      selectedSize === item.id && styles.selectedSizeText,
-                    ]}
-                  >
+                  <Text style={[styles.sizeText, selectedSize === item.id && styles.selectedSizeText]}>
                     {item.label}
                   </Text>
                 </TouchableOpacity>
@@ -202,9 +172,9 @@ const ProductDetail = () => {
           </View>
 
           {/* Add to Cart Button */}
-          <TouchableOpacity style={styles.addToCartButton}>
+          <TouchableOpacity style={styles.addToCartButton} onPress={handleAddToCart}>
             <Ionicons name="bag-outline" size={22} color="white" />
-            <Text style={styles.addToCartText}>Add Cart</Text>
+            <Text style={styles.addToCartText}>Add to Cart</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -212,53 +182,14 @@ const ProductDetail = () => {
   );
 };
 
+
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#ffffff',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '500',
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconContainer: {
-    marginRight: 16,
-  },
-  bagIcon: {
-    position: 'relative',
-  },
-  bagBadge: {
-    position: 'absolute',
-    top: -8,
-    right: -8,
-    backgroundColor: 'red',
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bagBadgeText: {
-    color: 'white',
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  profileImage: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-  },
+  
   imageContainer: {
     paddingHorizontal: 16,
     paddingVertical: 16,

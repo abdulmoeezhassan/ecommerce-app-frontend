@@ -1,12 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { Image, StyleSheet, Platform, View, FlatList, TouchableOpacity } from 'react-native';
-import { AntDesign } from "@expo/vector-icons";
-import { HelloWave } from '@/components/HelloWave';
+import { StyleSheet, Image, Platform, TouchableOpacity, FlatList, View } from 'react-native';
+
+import { Collapsible } from '@/components/Collapsible';
+import { ExternalLink } from '@/components/ExternalLink';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { IconSymbol } from '@/components/ui/IconSymbol';
 import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
+import { AntDesign } from '@expo/vector-icons';
 
 const API_BASE_URL = "http://localhost:3000";
 
@@ -145,6 +148,17 @@ export default function TabTwoScreen() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <ThemedText style={styles.title}>My Products</ThemedText>
+        <TouchableOpacity 
+          style={styles.addButton}
+          onPress={navigate}
+        >
+          <AntDesign name="pluscircle" size={15} color="white" />
+          <ThemedText style={styles.buttonText}>Add new product</ThemedText>
+        </TouchableOpacity>
+      </View>
+
       {loading && (
         <ThemedView style={styles.centeredContent}>
           <ThemedText>Loading products...</ThemedText>
@@ -181,6 +195,7 @@ export default function TabTwoScreen() {
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,

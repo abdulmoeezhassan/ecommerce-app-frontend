@@ -86,65 +86,78 @@ export default function Layout() {
       screenOptions={{ headerShown: false }}
     >
       <Drawer.Screen
-        name="index"
-        options={{
-          headerShown: true,
-          title: "Home",
-          headerStyle: { backgroundColor: "white" },
-          headerTintColor: "black",
-        }}
-      />
-
-      <Drawer.Screen
         name="(tabs)"
-        options={{
-          headerShown: true,
-          title: "Home",
-          headerStyle: { backgroundColor: "white" },
-          headerTintColor: "black",
-        }}
+        options={{ title: "User", headerShown: true }}
       />
       <Drawer.Screen
         name="(admin-tabs)"
-        options={{
-          headerShown: true,
-          title: "Home",
-          headerStyle: { backgroundColor: "white" },
-          headerTintColor: "black",
-        }}
+        options={{ title: "Admin", headerShown: true }}
       />
       <Drawer.Screen
         name="(supplier-tabs)"
-        options={{
-          headerShown: true,
-          title: "Home",
-          headerStyle: { backgroundColor: "white" },
-          headerTintColor: "black",
-        }}
+        options={{ title: "Supplier", headerShown: true }}
       />
       <Drawer.Screen
         name="settings"
         options={{
           headerShown: true,
-          headerLeft: () => BackButton(),
+          headerLeft: () => <BackButton />,
           title: "Settings",
-          headerStyle: { backgroundColor: "white" },
-          headerTintColor: "black",
         }}
       />
       <Drawer.Screen
         name="profile"
         options={{
           headerShown: true,
-          headerLeft: () => BackButton(),
+          headerLeft: () => <BackButton />,
           title: "Profile",
-          headerStyle: { backgroundColor: "white" },
-          headerTintColor: "black",
+        }}
+      />
+          <Drawer.Screen
+        name="active-orders"
+        options={{
+          headerShown: true,
+          headerLeft: () => <BackButton />,
+          title: "Active Orders",
+        }}
+      />
+          <Drawer.Screen
+        name="past-orders"
+        options={{
+          headerShown: true,
+          headerLeft: () => <BackButton />,
+          title: "Past Orders",
+        }}
+      />
+          <Drawer.Screen
+        name="custom-design"
+        options={{
+          headerShown: true,
+          headerLeft: () => <BackButton />,
+          title: "Custom Design",
+        }}
+      />
+          <Drawer.Screen
+        name="supplier-products"
+        options={{
+          headerShown: true,
+          headerLeft: () => <BackButton />,
+          title: "Products",
+        }}
+      />
+            <Drawer.Screen
+        name="users"
+        options={{
+          headerShown: true,
+          headerLeft: () => <BackButton />,
+          title: "Users",
         }}
       />
     </Drawer>
+    
   );
 }
+
 
 const styles = StyleSheet.create({
   navItemLabel: {

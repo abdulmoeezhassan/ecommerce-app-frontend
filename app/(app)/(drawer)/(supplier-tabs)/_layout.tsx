@@ -13,38 +13,56 @@ export default function SupplierTabsLayout() {
 
   return (
     <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: "absolute",
-          },
-          default: {},
-        }),
+    screenOptions={{
+      tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
+      headerShown: false,
+      tabBarButton: HapticTab,
+      tabBarBackground: TabBarBackground,
+      tabBarStyle: Platform.select({
+        ios: {
+          position: "absolute", // Transparent background for blur effect on iOS
+        },
+        default: {},
+      }),
+    }}
+  >
+    <Tabs.Screen
+      name="active-orders"
+      options={{
+        title: "Active Orders",
+        tabBarIcon: ({ color }) => (
+          <IconSymbol size={28} name="cart.fill" color={color} />
+        ),
       }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Home",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="house.fill" color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: "Explore",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="paperplane.fill" color={color} />
-          ),
-        }}
-      />
-    </Tabs>
+    />
+    <Tabs.Screen
+      name="past-orders"
+      options={{
+        title: "Past Orders",
+        tabBarIcon: ({ color }) => (
+          <IconSymbol size={28} name="clock.fill" color={color} />
+        ),
+      }}
+    />
+    <Tabs.Screen
+      name="supplier-products"
+      options={{
+        title: "Products",
+        tabBarIcon: ({ color }) => (
+          <IconSymbol size={28} name="bag.fill" color={color} />
+        ),
+      }}
+    />
+    <Tabs.Screen
+      name="custom-design"
+      options={{
+        title: "Custom Design",
+        tabBarIcon: ({ color }) => (
+          <IconSymbol size={28} name="paintbrush.fill" color={color} />
+        ),
+      }}
+    />
+  </Tabs>
+  
   );
 }

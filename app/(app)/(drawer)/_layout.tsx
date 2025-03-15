@@ -1,29 +1,91 @@
 import { View, Text, StyleSheet, Image } from "react-native";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Drawer } from "expo-router/drawer";
 import { DrawerContentScrollView, DrawerItem } from "@react-navigation/drawer";
-import { AntDesign, Ionicons } from "@expo/vector-icons";
+import { AntDesign, Ionicons, FontAwesome, MaterialIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, usePathname } from "expo-router";
+import axios from "axios";
+import { useSession } from "@/components/ctx";
+
+const API_BASE_URL = "http://localhost:3000";
+
+interface UserData {
+  imagePath?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+}
 
 const CustomDrawerContent = (props) => {
+  const [userData, setUserData] = useState<UserData>({});
   const pathname = usePathname();
+  const [error, setError] = useState(false);
+  const { signOut } = useSession();
 
+  const getAllOpportunities = async () => {
+    try {
+      const userId = await AsyncStorage.getItem("user_id");
+      if (!userId) {
+        throw new Error("User id not found!");
+      }
+
+      const response = await axios.get(`${API_BASE_URL}/api/users/get-single-user/${userId}`);
+      setUserData(response.data?.data || []);
+
+    } catch (error) {
+      console.error("Failed to fetch templates:", error);
+    }
+  };
+  const capitalizeFirstLetter = (text) => {
+    if (!text) return "";
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+  };
+  useEffect(() => {
+    getAllOpportunities();
+  }, []);
   useEffect(() => {
     console.log(pathname);
   }, [pathname]);
 
   return (
     <DrawerContentScrollView {...props}>
-      <View style={styles.userInfoWrapper}>
-        <Image
-          source={{ uri: "https://randomuser.me/api/portraits/women/26.jpg" }}
-          width={80}
-          height={80}
-          style={styles.userImg}
-        />
+     <View style={styles.userInfoWrapper}>
         <View style={styles.userDetailsWrapper}>
-          <Text style={styles.userName}>John Doe</Text>
-          <Text style={styles.userEmail}>john@email.com</Text>
+          {userData ? (
+            <View style={styles.userRow}>
+              <View className="flex flex-row items-center">
+                <Image
+                  source={
+                    error || !userData?.imagePath
+                      ? require("@/assets/images/user-placeholder-img.png")
+                      : { uri: userData?.imagePath }
+                  }
+                  style={styles.icon}
+                  onError={() => setError(true)}
+                />
+                <View style={styles.userTextWrapper}>
+                  <Text style={styles.userName}>
+                    {capitalizeFirstLetter(
+                      userData?.firstName + " " + userData?.lastName
+                    )}
+                  </Text>
+                  <Text style={styles.userEmail}>{userData?.email}</Text>
+                </View>
+              </View>
+              <FontAwesome
+                name="pencil"
+                size={18}
+                color="black"
+                onPress={() => router.push("/profile")}
+              />
+            </View>
+          ) : (
+            <View>
+              <Text style={styles.userName}>John Doe</Text>
+              <Text style={styles.userEmail}>john@email.com</Text>
+            </View>
+          )}
         </View>
       </View>
       <DrawerItem
@@ -63,6 +125,32 @@ const CustomDrawerContent = (props) => {
         onPress={() => {
           router.push("/settings");
         }}
+      />
+           <DrawerItem
+        icon={({ size }) => (
+          <MaterialIcons
+            name="password"
+            size={size}
+            color={pathname === "/change-password" ? "#fff" : "#000"}
+          />
+        )}
+        label={"Change Password"}
+        labelStyle={[
+          styles.navItemLabel,
+          { color: pathname === "/change-password" ? "#fff" : "#000" },
+        ]}
+        style={{
+          backgroundColor: pathname === "/change-password" ? "#333" : "#fff",
+        }}
+        onPress={() => router.push("/change-password")}
+      />
+           <DrawerItem
+        icon={({ size }) => (
+          <AntDesign className="rotate-180" name="logout" size={size} />
+        )}
+        label={"Sign Out"}
+        labelStyle={[styles.navItemLabel, { color: "black" }]}
+        onPress={signOut}
       />
     </DrawerContentScrollView>
   );
@@ -145,12 +233,20 @@ export default function Layout() {
           title: "Products",
         }}
       />
-            <Drawer.Screen
+     <Drawer.Screen
         name="users"
         options={{
           headerShown: true,
           headerLeft: () => <BackButton />,
           title: "Users",
+        }}
+      />
+      <Drawer.Screen
+        name="change-password"
+        options={{
+          headerShown: true,
+          headerLeft: () => <BackButton />,
+          title: "Update Password",
         }}
       />
     </Drawer>
@@ -161,31 +257,47 @@ export default function Layout() {
 
 const styles = StyleSheet.create({
   navItemLabel: {
-    marginLeft: -20,
     fontSize: 18,
   },
   userInfoWrapper: {
     flexDirection: "row",
-    paddingHorizontal: 10,
     paddingVertical: 20,
     borderBottomColor: "#ccc",
     borderBottomWidth: 1,
     marginBottom: 10,
   },
   userImg: {
+    width: 80,
+    height: 80,
     borderRadius: 40,
   },
   userDetailsWrapper: {
-    marginTop: 25,
+    marginTop: 10,
+    marginLeft: 5,
+    flex: 1,
+    alignItems: "center",
+  },
+  userRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  icon: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  userTextWrapper: {
     marginLeft: 10,
   },
   userName: {
-    fontSize: 16,
     fontWeight: "bold",
+    fontSize: 16,
   },
   userEmail: {
-    fontSize: 16,
-    fontStyle: "italic",
-    textDecorationLine: "underline",
+    fontSize: 14,
+    color: "gray",
   },
 });
+

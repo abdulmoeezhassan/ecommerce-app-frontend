@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   StyleSheet, 
   View, 
@@ -6,133 +6,306 @@ import {
   Image, 
   FlatList, 
   TouchableOpacity, 
-  SafeAreaView, 
-  StatusBar,
+  SafeAreaView,
   ScrollView,
-  Dimensions
+  Dimensions,
+  ActivityIndicator,
+  Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
+import axios from 'axios';
 import NavigationHeader from './navigation-header';
+import { useCart } from '../../components/cartcontext';
+
+// API Configuration
+const API_BASE_URL = 'http://localhost:3000/api/products/get-all-products'; // Main API endpoint
+const IMAGE_BASE_URL = 'http://localhost:3000'; // Base URL for images
+
 // Get screen width for responsive design
 const { width } = Dimensions.get('window');
 
-// Sample product data
-const PRODUCTS = [
-  {
-    id: '1',
-    name: 'Blue Hoodie Shirt',
-    price: 1500,
-    image: 'https://via.placeholder.com/150',
-    isFavorite: false
-  },
-  {
-    id: '2',
-    name: 'White Sweatshirt',
-    price: 3100,
-    image: 'https://via.placeholder.com/150',
-    isFavorite: false
-  },
-  {
-    id: '3',
-    name: 'Black Jeans',
-    price: 3100,
-    image: 'https://via.placeholder.com/150',
-    isFavorite: false
-  },
-  {
-    id: '4',
-    name: 'Green T-Shirt',
-    price: 2200,
-    image: 'https://via.placeholder.com/150',
-    isFavorite: false
-  },
-  {
-    id: '5',
-    name: 'Red Cap',
-    price: 1800,
-    image: 'https://via.placeholder.com/150',
-    isFavorite: false
-  },
-  {
-    id: '6',
-    name: 'Denim Jacket',
-    price: 65,
-    image: 'https://via.placeholder.com/150',
-    isFavorite: false
-  },
-];
-
-// Design categories
-const CATEGORIES = [
-    {
-        id: '1',
-        name: 'All',
-        icon: 'shirt-outline'
-      },
-  {
-    id: '2',
-    name: 'T-shirt',
-    icon: 'shirt-outline'
-  },
-  {
-    id: '3',
-    name: 'Hoodies',
-    icon: 'shirt-outline'
-  },
-  {
-    id: '4',
-    name: 'Jacket',
-    icon: 'shirt-outline'
-  }
-];
-
 const ProductsScreen = () => {
-  const [products, setProducts] = useState(PRODUCTS);
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [addingToCart, setAddingToCart] = useState({ status: false, productId: null });
+  
   const navigation = useNavigation();
   const router = useRouter();
+  const { addToCart, getCartSupplierId } = useCart(); // Use the cart context with supplier validation
 
-  const toggleFavorite = (id) => {
-    setProducts(
-      products.map(product => 
-        product.id === id 
-          ? {...product, isFavorite: !product.isFavorite} 
-          : product
-      )
+  // Fetch products from API
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Use axios with responseType 'text' to get raw response
+      const response = await axios.get(`${API_BASE_URL}`, {
+        responseType: 'text'
+      });
+      
+      // Parse the special format response "se{...json...}"
+      const jsonData = parseResponse(response.data);
+      
+      if (jsonData && jsonData.products) {
+        // Process the products array
+        const processedProducts = jsonData.products.map(product => ({
+          ...product,
+          id: product._id, // Ensure id exists for cart context
+          // Fix the image path handling
+          image: formatImageUrl(product.image),
+          // Parse nested JSON strings in arrays if present
+          color: parseArrayField(product.color),
+          quality: parseArrayField(product.quality),
+          size: parseArrayField(product.size)
+        }));
+        
+        setProducts(processedProducts);
+        
+        // Extract categories
+        const uniqueCategories = extractCategories(processedProducts);
+        setCategories(uniqueCategories);
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      setError('Failed to load products. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Improved function to format image URLs correctly
+  const formatImageUrl = (imagePath) => {
+    if (!imagePath) {
+      return 'https://via.placeholder.com/150';
+    }
+    
+    // If it's already a full URL
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+    
+    // Replace backslashes with forward slashes
+    const normalizedPath = imagePath.replace(/\\/g, '/');
+    
+    // Make sure we don't have double slashes when joining paths
+    const baseUrlWithoutTrailingSlash = IMAGE_BASE_URL.endsWith('/') 
+      ? IMAGE_BASE_URL.slice(0, -1) 
+      : IMAGE_BASE_URL;
+    
+    const pathWithoutLeadingSlash = normalizedPath.startsWith('/') 
+      ? normalizedPath.slice(1) 
+      : normalizedPath;
+    
+    return `${baseUrlWithoutTrailingSlash}/${pathWithoutLeadingSlash}`;
+  };
+
+  // Parse the special response format "se{...json...}"
+  const parseResponse = (responseText) => {
+    try {
+      // Find where the JSON object starts
+      const jsonStartIndex = responseText.indexOf('{');
+      if (jsonStartIndex === -1) {
+        console.error('No JSON data found in the response');
+        return null;
+      }
+      
+      // Extract and parse the JSON part
+      const jsonString = responseText.substring(jsonStartIndex);
+      return JSON.parse(jsonString);
+    } catch (error) {
+      console.error('Error parsing response:', error);
+      return null;
+    }
+  };
+
+  // Parse array fields that might be nested JSON strings
+  const parseArrayField = (field) => {
+    if (!field) return [];
+    
+    // If already an array
+    if (Array.isArray(field)) {
+      // Handle case where array contains JSON strings
+      if (field.length > 0 && typeof field[0] === 'string' && field[0].startsWith('[')) {
+        try {
+          return JSON.parse(field[0]);
+        } catch (e) {
+          return field;
+        }
+      }
+      return field;
+    }
+    
+    // If it's a string that looks like JSON
+    if (typeof field === 'string') {
+      if (field.startsWith('[')) {
+        try {
+          return JSON.parse(field);
+        } catch (e) {
+          return [field];
+        }
+      }
+      return [field];
+    }
+    
+    return [];
+  };
+
+  // Extract unique categories from products
+  const extractCategories = (productsList) => {
+    const uniqueCategories = new Set();
+    productsList.forEach(product => {
+      if (product.category) {
+        uniqueCategories.add(product.category);
+      }
+    });
+    
+    return [
+      { id: 'all', name: 'All', icon: 'shirt-outline' },
+      ...Array.from(uniqueCategories).map((category, index) => ({
+        id: `category-${index + 1}`,
+        name: category,
+        icon: 'shirt-outline'
+      }))
+    ];
+  };
+
+  // Check for supplier conflict
+  const checkSupplierConflict = (supplierId) => {
+    if (!supplierId) return false;
+    
+    const currentSupplierId = getCartSupplierId();
+    if (!currentSupplierId) return false;
+    
+    return currentSupplierId !== supplierId;
+  };
+
+  // Handle adding product to cart
+  const handleAddToCart = async (product) => {
+    // Check for supplier conflict
+    if (checkSupplierConflict(product.supplierId)) {
+      Alert.alert(
+        "Cannot Add Product",
+        "You can only add products from the same supplier in a single order. Please complete your current order or clear your cart before adding products from a different supplier."
+      );
+      return;
+    }
+    
+    // Add loading state for this specific product
+    setAddingToCart({ status: true, productId: product._id || product.id });
+    
+    try {
+      // Format product for cart context
+      const cartProduct = {
+        id: product._id || product.id,
+        name: product.name,
+        price: product.price,
+        quantity: 1,
+        // Add image to cart item for display in cart
+        image: product.image,
+        // Include supplierId
+        supplierId: product.supplierId
+      };
+      
+      // Use the updated addToCart that returns success status
+      const success = await addToCart(cartProduct);
+      
+      if (success) {
+        // Optional: show success message
+        // Alert.alert('Success', 'Product added to cart');
+      }
+    } finally {
+      // Clear loading state
+      setAddingToCart({ status: false, productId: null });
+    }
+  };
+
+  // Handle product press - navigate to product details
+  const handleProductPress = (product) => {
+    // Only pass the product ID
+    router.push({
+      pathname: '/product-detail',
+      params: { productId: product._id || product.id }
+    });
+  };
+
+  // Filter products by selected category
+  const getFilteredProducts = () => {
+    if (selectedCategory === 'all') {
+      return products;
+    }
+    
+    const categoryName = categories.find(cat => cat.id === selectedCategory)?.name;
+    return products.filter(product => product.category === categoryName);
+  };
+
+  // Render product item
+  const renderProductItem = ({ item }) => {
+    const isAddingToCart = addingToCart.status && addingToCart.productId === (item._id || item.id);
+    const hasSupplierConflict = checkSupplierConflict(item.supplierId);
+    
+    return (
+      <TouchableOpacity 
+        style={styles.productItem}
+        onPress={() => handleProductPress(item)}
+        activeOpacity={0.9}
+      >
+        <View style={styles.imageContainer}>
+          <Image 
+            source={{ uri: item.image }} 
+            style={styles.productImage} 
+            resizeMode="cover"
+            defaultSource={require('@/assets/images/product-placeholder.jpeg')}
+          />
+        </View>
+        <View style={styles.productInfo}>
+          <Text style={styles.categoryText} numberOfLines={1}>{item.category || ''}</Text>
+          <Text style={styles.productName} numberOfLines={1}>{item.name}</Text>
+          <Text style={styles.productPrice}>PKR {item.price}</Text>
+          
+          {/* Show sizes if available */}
+          {item.size && item.size.length > 0 && (
+            <View style={styles.sizesContainer}>
+              {item.size.slice(0, 3).map((size, index) => (
+                <Text key={index} style={styles.sizeText}>{size}</Text>
+              ))}
+              {item.size.length > 3 && <Text style={styles.sizeText}>+{item.size.length - 3}</Text>}
+            </View>
+          )}
+        </View>
+        <TouchableOpacity 
+          style={[
+            styles.cartButton,
+            hasSupplierConflict && styles.disabledCartButton
+          ]}
+          onPress={() => handleAddToCart(item)}
+          disabled={hasSupplierConflict || isAddingToCart}
+        >
+          {isAddingToCart ? (
+            <ActivityIndicator size="small" color="#000" />
+          ) : (
+            <Ionicons 
+              name={hasSupplierConflict ? "close-outline" : "bag-outline"} 
+              size={18} 
+              color={hasSupplierConflict ? "#ff4d4d" : "black"} 
+            />
+          )}
+        </TouchableOpacity>
+      </TouchableOpacity>
     );
   };
 
-  const renderProductItem = ({ item }) => (
-    <View style={styles.productItem}>
-      <View style={styles.imageContainer}>
-        <Image 
-          source={{ uri: item.image }} 
-          style={styles.productImage} 
-          resizeMode="cover"
-        />
-        <TouchableOpacity 
-          style={styles.favoriteButton}
-          onPress={() => toggleFavorite(item.id)}
-        >
-          <Ionicons 
-            name={item.isFavorite ? "heart" : "heart-outline"} 
-            size={24} 
-            color={item.isFavorite ? "#ff4d4d" : "white"} 
-          />
-        </TouchableOpacity>
-      </View>
-      <View style={styles.productInfo}>
-        <Text style={styles.productName} numberOfLines={1}>{item.name}</Text>
-        <Text style={styles.productPrice}>PKR {item.price}</Text>
-      </View>
-      <TouchableOpacity style={styles.cartButton}>
-        <Ionicons name="bag-outline" size={18} color="black" />
-      </TouchableOpacity>
-    </View>
-  );
-
+  // Render category item
   const renderCategoryItem = ({ item }) => (
     <TouchableOpacity 
       style={[
@@ -141,11 +314,6 @@ const ProductsScreen = () => {
       ]}
       onPress={() => setSelectedCategory(item.id)}
     >
-      {/* <Ionicons 
-        name={item.icon} 
-        size={24} 
-        color={selectedCategory === item.id ? "#1e88e5" : "#6e6e6e"} 
-      /> */}
       <Text 
         style={[
           styles.categoryText,
@@ -157,81 +325,138 @@ const ProductsScreen = () => {
     </TouchableOpacity>
   );
 
+  // Render loading state
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <NavigationHeader title="Products" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#1e88e5" />
+          <Text style={styles.loadingText}>Loading products...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Render error state
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <NavigationHeader title="Products" />
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle-outline" size={60} color="#ff4d4d" />
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity 
+            style={styles.retryButton}
+            onPress={fetchProducts}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const filteredProducts = getFilteredProducts();
+
   return (
     <SafeAreaView style={styles.container}>
-    <NavigationHeader 
-        title="Products"
-      // Use navigation here
-    //   onCartPress={() => router.push('/cart')} // Navigate to the Cart screen
-    //   onProfilePress={() => router.push('/profile')} // Navigate to the Profile screen
-    />
-    
-    <ScrollView showsVerticalScrollIndicator={false}>
-      {/* Design Your Cloth Banner */}
-      <View style={styles.designBannerContainer}>
-        <Image
-          source={{ uri: 'https://s3-alpha-sig.figma.com/img/eaca/75f8/d634283bec04f97c63ec4ea1d9763d77?Expires=1742774400&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=t~QAzLnVRq814zf6T8ivWJB-euaiGBPZ-ru4Y8d-H5yAZor2VcM7zcX3mOJrWTNsfya~677N23MI~P~a4k1z2ldtWHgb2-yToB2ixZPV9s0XfHK4Ar9tpM9UikbdxAv5Us32X-GY~m7sJTrKDKxdc7w-QNqSWfP3B7MBXrm5q6Smd3tuiFuTuFfq5PGU5sVnPeAaDKLSdS9507~mWPq9ErvBu7d0YfgcmAjnnA1T5VKkFwaQjJ5l~npFlia1PvUGTH8Js9PG6DGKa~KQ7tBYJBzQL7kHszCBCWcKjD2zrncQRIZ6kdtu3k35IS0Q7lwBhmmxB9LyrZ7Ux4yQGsnbWg__' }}
-          style={styles.designBannerImage}
-          resizeMode="cover"
-        />
-        <View style={styles.designBannerOverlay}>
-          <Text style={styles.designBannerTitle}>Design your{'\n'}Cloth</Text>
-        </View>
-      </View>
+      <NavigationHeader title="Products" />
       
-      {/* Design Categories */}
-      <View style={styles.categoriesContainer}>
-        <FlatList
-          data={CATEGORIES}
-          renderItem={renderCategoryItem}
-          keyExtractor={item => item.id}
-          horizontal={true}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categoriesList}
-        />
-      </View>
-      
-      {/* Product Section Title */}
-      <View style={styles.sectionTitleContainer}>
-        <Text style={styles.sectionTitle}>Popular Products</Text>
-        <TouchableOpacity>
-          <Text style={styles.seeAllText}>See All</Text>
-        </TouchableOpacity>
-      </View>
-      
-      {/* Products Grid */}
-      <View style={styles.productsContainer}>
-        {products.map(item => (
-          <View key={item.id} style={styles.productItemWrapper}>
-            {renderProductItem({ item })}
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Design Your Cloth Banner */}
+        <View style={styles.designBannerContainer}>
+          <Image
+            source={{ uri: 'https://s3-alpha-sig.figma.com/img/eaca/75f8/d634283bec04f97c63ec4ea1d9763d77?Expires=1742774400&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=t~QAzLnVRq814zf6T8ivWJB-euaiGBPZ-ru4Y8d-H5yAZor2VcM7zcX3mOJrWTNsfya~677N23MI~P~a4k1z2ldtWHgb2-yToB2ixZPV9s0XfHK4Ar9tpM9UikbdxAv5Us32X-GY~m7sJTrKDKxdc7w-QNqSWfP3B7MBXrm5q6Smd3tuiFuTuFfq5PGU5sVnPeAaDKLSdS9507~mWPq9ErvBu7d0YfgcmAjnnA1T5VKkFwaQjJ5l~npFlia1PvUGTH8Js9PG6DGKa~KQ7tBYJBzQL7kHszCBCWcKjD2zrncQRIZ6kdtu3k35IS0Q7lwBhmmxB9LyrZ7Ux4yQGsnbWg__' }}
+            style={styles.designBannerImage}
+            resizeMode="cover"
+          />
+          <View style={styles.designBannerOverlay}>
+            <Text style={styles.designBannerTitle}>Design your{'\n'}Cloth</Text>
           </View>
-        ))}
-      </View>
-    </ScrollView>
-  </SafeAreaView>
+        </View>
+        
+        {/* Design Categories */}
+        <View style={styles.categoriesContainer}>
+          <FlatList
+            data={categories}
+            renderItem={renderCategoryItem}
+            keyExtractor={item => item.id}
+            horizontal={true}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.categoriesList}
+          />
+        </View>
+        
+        {/* Product Section Title */}
+        <View style={styles.sectionTitleContainer}>
+          <Text style={styles.sectionTitle}>
+            {selectedCategory === 'all' ? 'All Products' : 
+              `${categories.find(cat => cat.id === selectedCategory)?.name} Products`}
+          </Text>
+          <TouchableOpacity>
+            <Text style={styles.seeAllText}>See All</Text>
+          </TouchableOpacity>
+        </View>
+        
+        {/* Products Grid */}
+        <View style={styles.productsContainer}>
+          {filteredProducts.length > 0 ? (
+            filteredProducts.map(item => (
+              <View key={item.id || item._id} style={styles.productItemWrapper}>
+                {renderProductItem({ item })}
+              </View>
+            ))
+          ) : (
+            <View style={styles.noProductsContainer}>
+              <Ionicons name="basket-outline" size={60} color="#b0bec5" />
+              <Text style={styles.noProductsText}>No products found in this category</Text>
+            </View>
+          )}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#f8f8f8',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
   },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
   },
-  filterButton: {
-    padding: 4,
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  errorText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 20,
+    backgroundColor: '#1e88e5',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '500',
   },
   
   // Design Banner Styles
@@ -282,11 +507,11 @@ const styles = StyleSheet.create({
   selectedCategoryItem: {
     borderBottomColor: '#1e88e5',
   },
-  categoryText: {
-    marginTop: 4,
-    color: '#6e6e6e',
-    fontSize: 14,
-  },
+//   categoryText: {
+//     fontSize: 12,
+//     color: '#6e6e6e',
+//     marginBottom: 2,
+//   },
   selectedCategoryText: {
     color: '#1e88e5',
     fontWeight: '500',
@@ -333,29 +558,29 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     position: 'relative',
+    backgroundColor: '#f5f5f5', // Light gray background for image loading
   },
   productImage: {
     width: '100%',
     height: 180,
   },
-  favoriteButton: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    borderRadius: 15,
-    padding: 6,
-  },
   productInfo: {
     padding: 12,
   },
+  categoryText: {
+    fontSize: 12,
+    color: '#6e6e6e',
+    marginBottom: 2,
+  },
   productName: {
     fontSize: 14,
+    fontWeight: '500',
     marginBottom: 4,
   },
   productPrice: {
     fontSize: 16,
     fontWeight: 'bold',
+    marginBottom: 4,
   },
   cartButton: {
     position: 'absolute',
@@ -364,6 +589,43 @@ const styles = StyleSheet.create({
     backgroundColor: '#e9ecef',
     borderRadius: 15,
     padding: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 34,
+    height: 34,
+  },
+  disabledCartButton: {
+    backgroundColor: '#ffe5e5',
+    borderColor: '#ffcdd2',
+    borderWidth: 1,
+  },
+  noProductsContainer: {
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  noProductsText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+  },
+  // Size display
+  sizesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 4,
+  },
+  sizeText: {
+    fontSize: 12,
+    color: '#6e6e6e',
+    marginRight: 6,
+    marginBottom: 4,
+    backgroundColor: '#f5f5f5',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
   },
 });
 

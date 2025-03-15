@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,44 +9,138 @@ import {
   SafeAreaView,
   StatusBar,
   Dimensions,
+  Alert,
+  ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import { useCart } from '../../components/cartcontext';  // Import the useCart hook
-import NavigationHeader from './navigation-header'; // Import NavigationHeader
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { useCart } from '../../components/cartcontext';
+import NavigationHeader from './navigation-header';
+import axios from 'axios';
 
 const { width } = Dimensions.get('window');
+const IMAGE_BASE_URL = 'http://localhost:3000'; // Base URL for images
+const API_BASE_URL = 'http://localhost:3000/api/products'; // Base API URL
 
 const ProductDetail = () => {
   const navigation = useNavigation();
-  const { addToCart } = useCart();  // Use the addToCart function from the context
-
-  const [selectedColor, setSelectedColor] = useState('red');
-  const [selectedSize, setSelectedSize] = useState('S');
+  const route = useRoute();
+  const { addToCart, getCartSupplierId } = useCart();
+  
+  // Get productId from route params
+  const productId = route.params?.productId;
+  
+  // State variables
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedColor, setSelectedColor] = useState('');
+  const [selectedSize, setSelectedSize] = useState('');
   const [quantity, setQuantity] = useState(1);
-  const [selectedQuality, setSelectedQuality] = useState('237.34');
+  const [selectedQuality, setSelectedQuality] = useState('');
   const [showQualityOptions, setShowQualityOptions] = useState(false);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [hasSupplierConflict, setHasSupplierConflict] = useState(false);
+  
+  // Fetch product details when component mounts
+  useEffect(() => {
+    if (productId) {
+      fetchProductDetails();
+    } else {
+      setLoading(false);
+      setError('Product ID not provided');
+    }
+  }, [productId]);
+  
+  // Function to fetch product details from API
+  const fetchProductDetails = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API_BASE_URL}/get-product-by-id/${productId}`);
+      
+      if (response.data && response.data.message === 'Product fetched successfully') {
+        const fetchedProduct = response.data.products;
+        setProduct(fetchedProduct);
+        
+        // Parse product options and set initial selections
+        const colors = parseArrayField(fetchedProduct.color);
+        const sizes = parseArrayField(fetchedProduct.size);
+        const qualities = parseArrayField(fetchedProduct.quality);
+        
+        setSelectedColor(colors[0] || '');
+        setSelectedSize(sizes[0] || '');
+        setSelectedQuality(qualities[0] || '');
+        
+        // Check for supplier conflict
+        checkSupplierConflict(fetchedProduct.supplierId);
+      } else {
+        setError('Invalid response from server');
+      }
+    } catch (error) {
+      console.error('Error fetching product details:', error);
+      setError('Failed to load product details. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Check for supplier conflicts
+  const checkSupplierConflict = (productSupplierId) => {
+    // Get current cart supplier ID
+    const currentSupplierId = getCartSupplierId();
+    
+    // If no current supplier or IDs match, no conflict
+    if (!currentSupplierId || !productSupplierId) {
+      setHasSupplierConflict(false);
+      return;
+    }
+    
+    // Different suppliers - conflict exists
+    if (currentSupplierId !== productSupplierId) {
+      setHasSupplierConflict(true);
+    } else {
+      setHasSupplierConflict(false);
+    }
+  };
+  
+  // Parse product data (handling array fields that might be JSON strings)
+  const parseArrayField = (field) => {
+    if (!field) return [];
+    
+    // If already an array
+    if (Array.isArray(field)) {
+      // Handle case where array contains JSON strings
+      if (field.length > 0 && typeof field[0] === 'string' && field[0].startsWith('[')) {
+        try {
+          return JSON.parse(field[0]);
+        } catch (e) {
+          return field;
+        }
+      }
+      return field;
+    }
+    
+    // If it's a string that looks like JSON
+    if (typeof field === 'string') {
+      if (field.startsWith('[')) {
+        try {
+          return JSON.parse(field);
+        } catch (e) {
+          return [field];
+        }
+      }
+      return [field];
+    }
+    
+    return [];
+  };
 
-  // Sample data options
-  const colors = [
-    { id: 'red', color: '#FF0000' },
-    { id: 'blue', color: '#72B4C2' },
-    { id: 'black', color: '#000000' },
-  ];
+  // Get parsed options for UI
+  const getColorOptions = () => product ? parseArrayField(product.color) : [];
+  const getQualityOptions = () => product ? parseArrayField(product.quality) : [];
+  const getSizeOptions = () => product ? parseArrayField(product.size) : [];
 
-  const sizes = [
-    { id: 'S', label: 'S' },
-    { id: 'M', label: 'M' },
-    { id: 'L', label: 'L' },
-  ];
-
-  const qualityOptions = [
-    { id: '180.50', label: '180.50' },
-    { id: '200.75', label: '200.75' },
-    { id: '237.34', label: '237.34' },
-    { id: '250.00', label: '250.00' },
-  ];
-
+  // Quantity management
   const increaseQuantity = () => {
     setQuantity(quantity + 1);
   };
@@ -57,6 +151,7 @@ const ProductDetail = () => {
     }
   };
 
+  // Quality dropdown management
   const toggleQualityOptions = () => {
     setShowQualityOptions(!showQualityOptions);
   };
@@ -66,57 +161,175 @@ const ProductDetail = () => {
     setShowQualityOptions(false);
   };
 
+  // Format image URL
+  const formatImageUrl = (imagePath) => {
+    if (!imagePath) {
+      return 'https://via.placeholder.com/150';
+    }
+    
+    // If it's already a full URL
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+    
+    // Replace backslashes with forward slashes
+    const normalizedPath = imagePath.replace(/\\/g, '/');
+    
+    // Make sure we don't have double slashes when joining paths
+    const baseUrlWithoutTrailingSlash = IMAGE_BASE_URL.endsWith('/') 
+      ? IMAGE_BASE_URL.slice(0, -1) 
+      : IMAGE_BASE_URL;
+    
+    const pathWithoutLeadingSlash = normalizedPath.startsWith('/') 
+      ? normalizedPath.slice(1) 
+      : normalizedPath;
+    
+    return `${baseUrlWithoutTrailingSlash}/${pathWithoutLeadingSlash}`;
+  };
+
   // Handle Add to Cart
-  const handleAddToCart = () => {
-    const product = {
-      id: `${selectedColor}-${selectedSize}-${selectedQuality}`,
-      name: `Product ${selectedColor} ${selectedSize}`,
+  const handleAddToCart = async () => {
+    // Check if all options are selected
+    if (!selectedColor || !selectedSize || !selectedQuality) {
+      Alert.alert('Selection Required', 'Please select all product options before adding to cart.');
+      return;
+    }
+    
+    // Prevent adding to cart if there's a supplier conflict
+    if (hasSupplierConflict) {
+      Alert.alert(
+        "Cannot Add Product",
+        "You can only add products from the same supplier in a single order. Please complete your current order or clear your cart before adding products from a different supplier."
+      );
+      return;
+    }
+
+    // Create cart product object with supplierId
+    const cartProduct = {
+      id: product._id,
+      name: product.name,
+      price: product.price,
       color: selectedColor,
       size: selectedSize,
       quality: selectedQuality,
-      price: parseFloat(selectedQuality), // Assuming price is the same as quality
-      quantity,
+      quantity: quantity,
+      image: product.image,
+      supplierId: product.supplierId // Include supplierId
     };
 
-    addToCart(product); // Adding product to the cart using context
+    setAddingToCart(true);
+    try {
+      // The addToCart function now returns a boolean success value
+      const success = await addToCart(cartProduct);
+      
+      if (success) {
+        Alert.alert('Success', 'Product added to cart successfully');
+      }
+      // If not successful, the cart context already showed an error message
+    } finally {
+      setAddingToCart(false);
+    }
   };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <NavigationHeader title="Loading Product..." />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#1e88e5" />
+          <Text style={styles.loadingText}>Loading product details...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Show error state
+  if (error || !product) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <NavigationHeader title="Product Details" />
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle-outline" size={60} color="#ff4d4d" />
+          <Text style={styles.errorText}>{error || 'Product information not available'}</Text>
+          {productId && (
+            <TouchableOpacity 
+              style={styles.retryButton}
+              onPress={fetchProductDetails}
+            >
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Get options for display
+  const colorOptions = getColorOptions();
+  const qualityOptions = getQualityOptions();
+  const sizeOptions = getSizeOptions();
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#ffffff" barStyle="dark-content" />
       
-      {/* Add Navigation Header here */}
-      <NavigationHeader title="Product Details" />
+      <NavigationHeader title={product.name || "Product Details"} />
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Product Image */}
         <View style={styles.imageContainer}>
           <Image
-            source={{ uri: 'https://s3-alpha-sig.figma.com/img/2536/4fa7/5335fdf391d9229fda9ae943da540bf0' }}
+            source={{ uri: formatImageUrl(product.image) }}
             style={styles.productImage}
             resizeMode="cover"
+            defaultSource={require('@/assets/images/product-placeholder.jpeg')}
           />
         </View>
+        
+        {/* Product Info */}
+        <View style={styles.productInfoContainer}>
+          <Text style={styles.productName}>{product.name}</Text>
+          <Text style={styles.productCategory}>{product.category}</Text>
+          <Text style={styles.productPrice}>PKR {product.price}</Text>
+        </View>
+
+        {/* Supplier Conflict Warning */}
+        {hasSupplierConflict && (
+          <View style={styles.warningContainer}>
+            <Ionicons name="warning-outline" size={24} color="#ff9800" />
+            <Text style={styles.warningText}>
+              This product is from a different supplier than items in your cart. 
+              You need to complete or clear your current order before adding this product.
+            </Text>
+          </View>
+        )}
 
         {/* Product Options */}
         <View style={styles.optionsContainer}>
-          {/* Color Selection */}
-          <View style={styles.optionRow}>
-            <Text style={styles.optionLabel}>Color</Text>
-            <View style={styles.colorOptions}>
-              {colors.map((item) => (
-                <TouchableOpacity
-                  key={item.id}
-                  style={[styles.colorCircle, { backgroundColor: item.color }, selectedColor === item.id && styles.selectedColorBorder]}
-                  onPress={() => setSelectedColor(item.id)}
-                />
-              ))}
+          {/* Color Selection - Only show if colors are available */}
+          {colorOptions.length > 0 && (
+            <View style={styles.optionRow}>
+              <Text style={styles.optionLabel}>Color</Text>
+              <View style={styles.colorOptions}>
+                {colorOptions.map((color, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.colorCircle, 
+                      { backgroundColor: color.toLowerCase() },
+                      selectedColor === color && styles.selectedColorBorder
+                    ]}
+                    onPress={() => setSelectedColor(color)}
+                  />
+                ))}
+              </View>
             </View>
-          </View>
+          )}
 
-          {/* Quality Selection */}
+          {/* Quantity Selection */}
           <View style={styles.optionRow}>
-            <Text style={styles.optionLabel}>Select Quality</Text>
+            <Text style={styles.optionLabel}>Select Quantity</Text>
             <View style={styles.quantityContainer}>
               <TouchableOpacity style={styles.decreaseButton} onPress={decreaseQuantity}>
                 <Text style={styles.quantityButtonText}>-</Text>
@@ -130,51 +343,82 @@ const ProductDetail = () => {
             </View>
           </View>
 
-          {/* Chosen Quality */}
-          <View style={styles.optionRow}>
-            <Text style={styles.optionLabel}>Chose Cloth Quality</Text>
-            <View style={styles.qualitySelectorContainer}>
-              {showQualityOptions && (
-                <View style={styles.qualityDropdown}>
-                  {qualityOptions.map((option) => (
-                    <TouchableOpacity
-                      key={option.id}
-                      style={[styles.qualityOption, selectedQuality === option.id && styles.selectedQualityOption]}
-                      onPress={() => selectQuality(option.id)}
-                    >
-                      <Text style={styles.qualityOptionText}>{option.label}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-              <TouchableOpacity style={styles.qualitySelector} onPress={toggleQualityOptions}>
-                <Text style={styles.qualityValue}>{selectedQuality}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Size Selection */}
-          <View style={styles.optionRow}>
-            <Text style={styles.optionLabel}>Select Size</Text>
-            <View style={styles.sizeOptions}>
-              {sizes.map((item) => (
-                <TouchableOpacity
-                  key={item.id}
-                  style={[styles.sizeCircle, selectedSize === item.id && styles.selectedSize]}
-                  onPress={() => setSelectedSize(item.id)}
-                >
-                  <Text style={[styles.sizeText, selectedSize === item.id && styles.selectedSizeText]}>
-                    {item.label}
-                  </Text>
+          {/* Quality Selection - Only show if qualities are available */}
+          {qualityOptions.length > 0 && (
+            <View style={styles.optionRow}>
+              <Text style={styles.optionLabel}>Choose Cloth Quality</Text>
+              <View style={styles.qualitySelectorContainer}>
+                {showQualityOptions && (
+                  <View style={styles.qualityDropdown}>
+                    {qualityOptions.map((quality, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={[
+                          styles.qualityOption, 
+                          selectedQuality === quality && styles.selectedQualityOption
+                        ]}
+                        onPress={() => selectQuality(quality)}
+                      >
+                        <Text style={styles.qualityOptionText}>{quality}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+                <TouchableOpacity style={styles.qualitySelector} onPress={toggleQualityOptions}>
+                  <Text style={styles.qualityValue}>{selectedQuality || "Select"}</Text>
+                  <Ionicons name="chevron-down" size={16} color="#666" />
                 </TouchableOpacity>
-              ))}
+              </View>
             </View>
-          </View>
+          )}
+
+          {/* Size Selection - Only show if sizes are available */}
+          {sizeOptions.length > 0 && (
+            <View style={styles.optionRow}>
+              <Text style={styles.optionLabel}>Select Size</Text>
+              <View style={styles.sizeOptions}>
+                {sizeOptions.map((size, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.sizeCircle, 
+                      selectedSize === size && styles.selectedSize
+                    ]}
+                    onPress={() => setSelectedSize(size)}
+                  >
+                    <Text 
+                      style={[
+                        styles.sizeText, 
+                        selectedSize === size && styles.selectedSizeText
+                      ]}
+                    >
+                      {size}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
 
           {/* Add to Cart Button */}
-          <TouchableOpacity style={styles.addToCartButton} onPress={handleAddToCart}>
-            <Ionicons name="bag-outline" size={22} color="white" />
-            <Text style={styles.addToCartText}>Add to Cart</Text>
+          <TouchableOpacity 
+            style={[
+              styles.addToCartButton,
+              hasSupplierConflict && styles.disabledButton
+            ]}
+            onPress={handleAddToCart}
+            disabled={hasSupplierConflict || addingToCart}
+          >
+            {addingToCart ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <>
+                <Ionicons name="bag-outline" size={22} color="white" />
+                <Text style={styles.addToCartText}>
+                  {hasSupplierConflict ? 'Cannot Add To Cart' : 'Add to Cart'}
+                </Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -182,14 +426,47 @@ const ProductDetail = () => {
   );
 };
 
-
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#ffffff',
   },
-  
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 20,
+    backgroundColor: '#1e88e5',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '500',
+  },
   imageContainer: {
     paddingHorizontal: 16,
     paddingVertical: 16,
@@ -200,8 +477,44 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: '#f5f5f5',
   },
+  productInfoContainer: {
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  productName: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  productCategory: {
+    fontSize: 14,
+    color: '#888',
+    marginBottom: 8,
+  },
+  productPrice: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1e88e5',
+  },
+  warningContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff3e0',
+    borderRadius: 8,
+    padding: 12,
+    marginHorizontal: 16,
+    marginBottom: 16,
+  },
+  warningText: {
+    flex: 1,
+    marginLeft: 8,
+    color: '#e65100',
+    fontSize: 14,
+  },
   optionsContainer: {
     padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
   },
   optionRow: {
     flexDirection: 'row',
@@ -242,17 +555,13 @@ const styles = StyleSheet.create({
     minWidth: 80,
     alignItems: 'center',
     alignSelf: 'flex-end',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   qualityValue: {
     fontSize: 16,
     color: '#333',
-  },
-  qualitySubtext: {
-    fontSize: 12,
-    color: '#999',
-    marginTop: -12,
-    marginBottom: 16,
-    marginLeft: '40%',
+    marginRight: 8,
   },
   qualityDropdown: {
     marginBottom: 4,
@@ -318,6 +627,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 50,
     marginTop: 12,
+  },
+  disabledButton: {
+    backgroundColor: '#aaa',
   },
   addToCartText: {
     color: 'white',

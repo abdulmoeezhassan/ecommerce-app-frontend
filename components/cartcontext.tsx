@@ -1,22 +1,30 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Alert } from "react-native";
 
-// Define Product Type
+// Define Product Type with supplierId
 interface Product {
   id: string;
   name: string;
   price: number;
   quantity: number;
+  supplierId?: string;  // Added supplierId
+  // Other optional fields that might be in the product
+  color?: string;
+  size?: string;
+  quality?: string;
+  image?: string;
 }
 
 // Define Context Type
 interface CartContextType {
   cart: Product[];
-  addToCart: (product: Product) => void;
+  addToCart: (product: Product) => Promise<boolean>; // Returns success status
   removeFromCart: (productId: string) => void;
   increaseQuantity: (productId: string) => void;
   decreaseQuantity: (productId: string) => void;
   clearCart: () => void;
+  getCartSupplierId: () => string | null; // Get current cart supplier ID
 }
 
 // Create Context
@@ -47,20 +55,57 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     await AsyncStorage.setItem("cart", JSON.stringify(updatedCart));
   };
 
-  // Add product to cart
-  const addToCart = async (product: Product) => {
+  // Get the current cart supplier ID
+  const getCartSupplierId = (): string | null => {
+    if (cart.length === 0) return null;
+    
+    // Find first product with a supplierId
+    const productWithSupplierId = cart.find(item => item.supplierId);
+    return productWithSupplierId?.supplierId || null;
+  };
+
+  // Add product to cart with supplier validation
+  const addToCart = async (product: Product): Promise<boolean> => {
+    // Check if product has a supplierId
+    if (!product.supplierId) {
+      // If no supplierId, we'll allow it (legacy support)
+      return addProductToCart(product);
+    }
+
+    // Get current cart supplier ID
+    const currentSupplierId = getCartSupplierId();
+
+    // If cart is empty or supplier matches, add product
+    if (!currentSupplierId || currentSupplierId === product.supplierId) {
+      return addProductToCart(product);
+    } else {
+      // Different supplier - show error
+      Alert.alert(
+        "Cannot Add Product",
+        "You can only add products from the same supplier in a single order. Please complete your current order or clear your cart before adding products from a different supplier.",
+        [{ text: "OK" }]
+      );
+      return false;
+    }
+  };
+
+  // Helper function to add product to cart after validation
+  const addProductToCart = async (product: Product): Promise<boolean> => {
     const existingProduct = cart.find((item) => item.id === product.id);
     let updatedCart: Product[];
 
     if (existingProduct) {
       updatedCart = cart.map((item) =>
-        item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+        item.id === product.id ? { ...item, quantity: item.quantity + product.quantity } : item
       );
     } else {
-      updatedCart = [...cart, { ...product, quantity: 1 }];
+      // Ensure product has at least quantity 1
+      const newProduct = { ...product, quantity: product.quantity || 1 };
+      updatedCart = [...cart, newProduct];
     }
 
-    saveCartToStorage(updatedCart);
+    await saveCartToStorage(updatedCart);
+    return true;
   };
 
   // Remove product from cart
@@ -95,7 +140,15 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   };
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, increaseQuantity, decreaseQuantity, clearCart }}>
+    <CartContext.Provider value={{ 
+      cart, 
+      addToCart, 
+      removeFromCart, 
+      increaseQuantity, 
+      decreaseQuantity, 
+      clearCart,
+      getCartSupplierId
+    }}>
       {children}
     </CartContext.Provider>
   );

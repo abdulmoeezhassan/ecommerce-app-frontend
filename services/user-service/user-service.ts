@@ -1,4 +1,4 @@
-const SERVER_BASE_URL = 'http://localhost:3000/api/';
+const SERVER_BASE_URL = process.env.SERVER_BASE_URL;
 
 const signUp = async (data) => {
     try {

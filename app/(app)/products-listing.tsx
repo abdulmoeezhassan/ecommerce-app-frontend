@@ -23,35 +23,35 @@ const PRODUCTS = [
   {
     id: '1',
     name: 'Blue Hoodie Shirt',
-    price: 15,
+    price: 1500,
     image: 'https://via.placeholder.com/150',
     isFavorite: false
   },
   {
     id: '2',
     name: 'White Sweatshirt',
-    price: 31,
+    price: 3100,
     image: 'https://via.placeholder.com/150',
     isFavorite: false
   },
   {
     id: '3',
     name: 'Black Jeans',
-    price: 45,
+    price: 3100,
     image: 'https://via.placeholder.com/150',
     isFavorite: false
   },
   {
     id: '4',
     name: 'Green T-Shirt',
-    price: 22,
+    price: 2200,
     image: 'https://via.placeholder.com/150',
     isFavorite: false
   },
   {
     id: '5',
     name: 'Red Cap',
-    price: 18,
+    price: 1800,
     image: 'https://via.placeholder.com/150',
     isFavorite: false
   },
@@ -125,7 +125,7 @@ const ProductsScreen = () => {
       </View>
       <View style={styles.productInfo}>
         <Text style={styles.productName} numberOfLines={1}>{item.name}</Text>
-        <Text style={styles.productPrice}>${item.price}</Text>
+        <Text style={styles.productPrice}>PKR {item.price}</Text>
       </View>
       <TouchableOpacity style={styles.cartButton}>
         <Ionicons name="bag-outline" size={18} color="black" />

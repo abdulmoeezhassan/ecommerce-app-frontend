@@ -8,21 +8,21 @@ const ShoppingCart = () => {
     {
       id: 1,
       title: 'Non excepturi come dolor sighs',
-      price: 15,
+      price: 1500,
       quantity: 2,
       image: 'https://via.placeholder.com/80'
     },
     {
       id: 2,
       title: 'Lorem ipsum dolor Auf labor',
-      price: 24,
+      price: 2400,
       quantity: 1,
       image: 'https://via.placeholder.com/80'
     },
     {
       id: 3,
       title: 'In modi dius qui iuste lorem',
-      price: 31,
+      price: 3100,
       quantity: 1,
       image: 'https://via.placeholder.com/80'
     }

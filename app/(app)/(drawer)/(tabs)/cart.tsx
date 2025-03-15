@@ -3,13 +3,13 @@ import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, Alert } fr
 import { Feather } from '@expo/vector-icons';
 import NavigationHeader from '../../navigation-header';
 import { useCart } from '../../../../components/cartcontext';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router'; // Changed from useNavigation to useRouter for Expo Router
 
 const IMAGE_BASE_URL = 'http://localhost:3000'; // Base URL for images
 
 const ShoppingCart = () => {
-  const { cart, removeFromCart, increaseQuantity, decreaseQuantity, clearCart } = useCart();
-  const navigation = useNavigation();
+  const { cart, removeFromCart, increaseQuantity, decreaseQuantity, clearCart, getCartSupplierId } = useCart();
+  const router = useRouter(); // Use Expo Router for navigation
 
   // Calculate total amount
   const totalAmount = cart.reduce((total, product) => {
@@ -42,16 +42,24 @@ const ShoppingCart = () => {
     return `${baseUrlWithoutTrailingSlash}/${pathWithoutLeadingSlash}`;
   };
 
-  // Handle checkout
+  // Handle checkout - navigate to shipping address page
   const handleCheckout = () => {
     if (cart.length === 0) {
       Alert.alert('Empty Cart', 'Your cart is empty. Add some products before checkout.');
       return;
     }
     
-    // Navigate to checkout screen or process checkout
-    // navigation.navigate('Checkout');
-    Alert.alert('Checkout', 'Proceeding to checkout...');
+    // Pass cart and supplier information to the next screen
+    const supplierId = getCartSupplierId();
+    
+    // Navigate to shipping-address screen using Expo Router
+    router.push({
+      pathname: '/shipping-address',
+      params: { 
+        cartTotal: totalAmount,
+        supplierId: supplierId || ''
+      }
+    });
   };
 
   // Handle clear cart with confirmation
@@ -85,7 +93,7 @@ const ShoppingCart = () => {
           <Text style={styles.emptyCartText}>Your cart is empty</Text>
           <TouchableOpacity 
             style={styles.continueShoppingButton}
-            onPress={() => navigation.navigate('products-listing')}
+            onPress={() => router.push('/products-listing')} // Use Expo Router for navigation
           >
             <Text style={styles.continueShoppingText}>Continue Shopping</Text>
           </TouchableOpacity>

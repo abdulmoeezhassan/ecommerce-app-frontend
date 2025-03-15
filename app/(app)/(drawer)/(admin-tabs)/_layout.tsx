@@ -7,6 +7,7 @@ import { IconSymbol } from "@/components/ui/IconSymbol";
 import TabBarBackground from "@/components/ui/TabBarBackground";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { FontAwesome } from "@expo/vector-icons";
 
 export default function AdminTabsLayout() {
   const colorScheme = useColorScheme();
@@ -41,7 +42,7 @@ export default function AdminTabsLayout() {
         options={{
           title: "Products",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="bag.fill" color={color} />
+            <FontAwesome name="cube" size={24} color={color} />
           ),
         }}
       />
@@ -49,9 +50,9 @@ export default function AdminTabsLayout() {
         name="users"
         options={{
           title: "Users",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="bag.fill" color={color} />
-          ),
+           tabBarIcon: ({ color }) => (
+              <FontAwesome name="user-o" size={24} color={color} />
+            ),
         }}
       />
         <Tabs.Screen
@@ -59,7 +60,7 @@ export default function AdminTabsLayout() {
         options={{
           title: "Suppliers",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="bag.fill" color={color} />
+            <FontAwesome name="briefcase" size={24} color={color} />
           ),
         }}
       />

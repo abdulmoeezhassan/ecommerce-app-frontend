@@ -7,6 +7,7 @@ import { IconSymbol } from "@/components/ui/IconSymbol";
 import TabBarBackground from "@/components/ui/TabBarBackground";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { FontAwesome } from "@expo/vector-icons";
 
 export default function SupplierTabsLayout() {
   const colorScheme = useColorScheme();
@@ -26,42 +27,45 @@ export default function SupplierTabsLayout() {
       }),
     }}
   >
-    <Tabs.Screen
-      name="active-orders"
-      options={{
-        title: "Active Orders",
-        tabBarIcon: ({ color }) => (
-          <IconSymbol size={28} name="cart.fill" color={color} />
-        ),
-      }}
-    />
-    <Tabs.Screen
-      name="past-orders"
-      options={{
-        title: "Past Orders",
-        tabBarIcon: ({ color }) => (
-          <IconSymbol size={28} name="clock.fill" color={color} />
-        ),
-      }}
-    />
-    <Tabs.Screen
-      name="supplier-products"
-      options={{
-        title: "Products",
-        tabBarIcon: ({ color }) => (
-          <IconSymbol size={28} name="bag.fill" color={color} />
-        ),
-      }}
-    />
-    <Tabs.Screen
-      name="custom-design"
-      options={{
-        title: "Custom Design",
-        tabBarIcon: ({ color }) => (
-          <IconSymbol size={28} name="paintbrush.fill" color={color} />
-        ),
-      }}
-    />
+<Tabs.Screen
+  name="active-orders"
+  options={{
+    title: "Active Orders",
+    tabBarIcon: ({ color }) => (
+      <FontAwesome name="shopping-bag" size={24} color={color} />
+    ),
+  }}
+/>
+
+<Tabs.Screen
+  name="past-orders"
+  options={{
+    title: "Past Orders",
+    tabBarIcon: ({ color }) => (
+      <FontAwesome name="history" size={24} color={color} />
+    ),
+  }}
+/>
+
+<Tabs.Screen
+  name="supplier-products"
+  options={{
+    title: "Products",
+    tabBarIcon: ({ color }) => (
+      <FontAwesome name="cube" size={24} color={color} />
+    ),
+  }}
+/>
+
+<Tabs.Screen
+  name="custom-design"
+  options={{
+    title: "Custom Design",
+    tabBarIcon: ({ color }) => (
+      <FontAwesome name="paint-brush" size={24} color={color} />
+    ),
+  }}
+/>
   </Tabs>
   
   );

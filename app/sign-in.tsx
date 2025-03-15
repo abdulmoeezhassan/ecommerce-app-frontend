@@ -2,7 +2,6 @@ import {
   ImageBackground,
   Text,
   View,
-  Image,
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
@@ -78,7 +77,7 @@ export default function SignIn() {
       if (responseData?.user?.role === "Supplier") {
         router.push("/(app)/(drawer)/(supplier-tabs)" as any);
       } else if (responseData?.user?.role === "Admin") {
-        router.replace("/(app)/(drawer)/(admin-tabs)" as any);
+        router.replace("/active-order" as any);
       } else {
         router.replace("/(app)/(drawer)/(tabs)" as any);
       }

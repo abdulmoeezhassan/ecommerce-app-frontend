@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 
 const SettingsMenu = () => {
   return (
@@ -14,15 +15,17 @@ const SettingsMenu = () => {
       </TouchableOpacity>
 
       {/* Delete Account Option */}
-      <TouchableOpacity style={styles.menuItem}>
+      {/* <TouchableOpacity style={styles.menuItem}>
         <View style={styles.iconContainer}>
           <Ionicons name="trash-outline" size={22} color="black" />
         </View>
         <Text style={styles.menuItemText}>Delete Account</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       {/* Change Password Option */}
-      <TouchableOpacity style={styles.menuItem}>
+      <TouchableOpacity style={styles.menuItem}
+        onPress={() => router.push('/change-password')}
+      >
         <View style={styles.iconContainer}>
           <Ionicons name="lock-closed-outline" size={22} color="black" />
         </View>

@@ -222,6 +222,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 'bold',
+    color: 'black'
   },
   addButton: {
     backgroundColor: '#000',
@@ -240,6 +241,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    backgroundColor: 'white'
   },
   errorText: {
     color: 'red',
@@ -249,6 +251,7 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: '#666',
     marginTop: 16,
   },
   emptySubText: {

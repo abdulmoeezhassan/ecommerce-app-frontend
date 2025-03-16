@@ -14,56 +14,58 @@ export default function AdminTabsLayout() {
 
   return (
     <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: "absolute",
-          },
-          default: {},
-        }),
+    screenOptions={{
+      tabBarActiveTintColor: "black", 
+      tabBarInactiveTintColor: "gray", 
+      tabBarStyle: {
+        backgroundColor: "white",
+        borderTopWidth: 0, 
+      },
+      headerShown: false,
+      tabBarButton: HapticTab,
+      tabBarBackground: TabBarBackground,
+    }}
+  >
+    <Tabs.Screen
+      name="all-orders"
+      options={{
+        title: "All Orders",
+        tabBarIcon: ({ color }) => (
+          <IconSymbol size={28} name="house.fill" color={color} />
+        ),
       }}
-    >
-      <Tabs.Screen
-        name="all-orders"
-        options={{
-          title: "All Orders",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="house.fill" color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: "Products",
-          tabBarIcon: ({ color }) => (
-            <FontAwesome name="cube" size={24} color={color} />
-          ),
-        }}
-      />
-       <Tabs.Screen
-        name="users"
-        options={{
-          title: "Users",
-           tabBarIcon: ({ color }) => (
-              <FontAwesome name="user-o" size={24} color={color} />
-            ),
-        }}
-      />
-        <Tabs.Screen
-        name="suppliers"
-        options={{
-          title: "Suppliers",
-          tabBarIcon: ({ color }) => (
-            <FontAwesome name="briefcase" size={24} color={color} />
-          ),
-        }}
-      />
-    </Tabs>
+    />
+  
+    <Tabs.Screen
+      name="explore"
+      options={{
+        title: "Products",
+        tabBarIcon: ({ color }) => (
+          <FontAwesome name="cube" size={24} color={color} />
+        ),
+      }}
+    />
+  
+    <Tabs.Screen
+      name="users"
+      options={{
+        title: "Users",
+        tabBarIcon: ({ color }) => (
+          <FontAwesome name="user-o" size={24} color={color} />
+        ),
+      }}
+    />
+  
+    <Tabs.Screen
+      name="suppliers"
+      options={{
+        title: "Suppliers",
+        tabBarIcon: ({ color }) => (
+          <FontAwesome name="briefcase" size={24} color={color} />
+        ),
+      }}
+    />
+  </Tabs>
+  
   );
 }

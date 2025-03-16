@@ -35,7 +35,7 @@ export default function Signup() {
       email: "",
       password: "",
       confirmPassword: "",
-      role: "",
+      role: "User",
     },
   });
   const [submittedData, setSubmittedData] = useState(null);
@@ -240,6 +240,7 @@ export default function Signup() {
             control={control}
             name="role"
             rules={{ required: "Role is required" }}
+            defaultValue="User"
             render={({ field: { onChange, value } }) => (
               <View>
                 <Picker

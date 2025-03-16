@@ -23,7 +23,7 @@ export default function TabTwoScreen() {
         throw new Error('User ID not found in storage.');
       }
 
-      const response = await axios.get(`${API_BASE_URL}/orders/supplier/${id}`);
+      const response = await axios.get(`${API_BASE_URL}/orders/get-order-by-userid/${id}`);
 
       if (response.data && Array.isArray(response.data.orders)) {
         setOrders(response.data.orders);
@@ -42,34 +42,6 @@ export default function TabTwoScreen() {
   useEffect(() => {
     fetchOrders();
   }, []);
-
-  const updateOrderStatus = async (orderId, newStatus) => {
-    try {
-      const response = await axios.put(`${API_BASE_URL}/orders/update-status/${orderId}`, {
-        orderStatus: newStatus,
-      });
-
-      if (response.status === 200) {
-        setOrders((prevOrders) =>
-          prevOrders.map((order) =>
-            order._id === orderId ? { ...order, orderStatus: newStatus } : order
-          )
-        );
-        Toast.show({
-          type: "success",
-          text1: "Order Status updated successfully",
-          text2: response?.data?.message || "Error in updating order status",
-        });
-        fetchOrders();
-      }
-    } catch (error) {
-      console.error("Error updating order status:", error);
-    }
-  };
-
-  const navigate = () => {
-    // router.push('/add-order');
-  };
 
   const renderOrderCard = ({ item }) => (
     <TouchableOpacity
@@ -117,21 +89,6 @@ export default function TabTwoScreen() {
               </View>
             </View>
           )}
-  
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.cancelButton]}
-              onPress={() => updateOrderStatus(item._id, "Delivered")}
-            >
-              <Text style={styles.buttonText}>Delivered</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.rejectButton]}
-              onPress={() => updateOrderStatus(item._id, "Rejected")}
-            >
-              <Text style={styles.buttonText}>Reject</Text>
-            </TouchableOpacity>
-          </View>
         </View>
       </View>
     </TouchableOpacity>

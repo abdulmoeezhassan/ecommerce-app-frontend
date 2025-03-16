@@ -1,5 +1,6 @@
-const SERVER_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+const SERVER_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app/api/";
 
+// const SERVER_BASE_URL = "http://localhost:3000/api/";
 const signUp = async (data) => {
     try {
       return await fetch(`${SERVER_BASE_URL}auth/register`, {

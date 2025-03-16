@@ -8,7 +8,7 @@ import { AntDesign } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 
-const API_BASE_URL = "http://localhost:3000/api";
+const API_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app/api";
 
 export default function TabTwoScreen() {
   const [orders, setOrders] = useState([]);

@@ -21,11 +21,12 @@ import { useCart } from '../../components/cartcontext';
 import Toast from 'react-native-toast-message';
 
 // API Configuration
-const API_BASE_URL = 'http://localhost:3000/api/products/get-all-products'; // Main API endpoint
-const IMAGE_BASE_URL = 'http://localhost:3000'; // Base URL for images
+const API_BASE_URL = 'https://ecommerce-app-backend-indol.vercel.app/api/products/get-all-products'; // Main API endpoint
+const IMAGE_BASE_URL = 'https://ecommerce-app-backend-indol.vercel.app/'; // Base URL for images
 
 // Get screen width for responsive design
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
+const NUM_COLUMNS = 2; // Number of columns in the grid
 
 const ProductsScreen = () => {
   const [products, setProducts] = useState([]);
@@ -39,6 +40,7 @@ const ProductsScreen = () => {
   const router = useRouter();
   const { addToCart, getCartSupplierId } = useCart(); 
   const headerImage = require("@/assets/images/headerpic.png");
+  
   // Fetch products from API
   useEffect(() => {
     fetchProducts();
@@ -48,7 +50,9 @@ const ProductsScreen = () => {
   useEffect(() => {
     if (categories.length > 0 && category) {
       // Find the category ID that matches the passed category name
-      const categoryItem = categories.find(cat => cat.name === category);
+      const categoryItem = categories.find(cat => 
+        cat.name.toLowerCase() === (category?.toLowerCase() || '')
+      );
       if (categoryItem) {
         setSelectedCategory(categoryItem.id);
       }
@@ -58,7 +62,6 @@ const ProductsScreen = () => {
   const fetchProducts = async () => {
     try {
       setIsLoading(true);
-      
       
       const response = await axios.get(`${API_BASE_URL}`, {
         responseType: 'text'
@@ -101,7 +104,6 @@ const ProductsScreen = () => {
       return 'https://via.placeholder.com/150';
     }
     
- 
     if (imagePath.startsWith('http')) {
       return imagePath;
     }
@@ -109,7 +111,6 @@ const ProductsScreen = () => {
     // Replace backslashes with forward slashes
     const normalizedPath = imagePath.replace(/\\/g, '/');
     
- 
     const baseUrlWithoutTrailingSlash = IMAGE_BASE_URL.endsWith('/') 
       ? IMAGE_BASE_URL.slice(0, -1) 
       : IMAGE_BASE_URL;
@@ -121,10 +122,8 @@ const ProductsScreen = () => {
     return `${baseUrlWithoutTrailingSlash}/${pathWithoutLeadingSlash}`;
   };
 
-
   const parseResponse = (responseText) => {
     try {
- 
       const jsonStartIndex = responseText.indexOf('{');
       if (jsonStartIndex === -1) {
         console.error('No JSON data found in the response');
@@ -146,7 +145,6 @@ const ProductsScreen = () => {
     
     // If already an array
     if (Array.isArray(field)) {
-     
       if (field.length > 0 && typeof field[0] === 'string' && field[0].startsWith('[')) {
         try {
           return JSON.parse(field[0]);
@@ -157,7 +155,6 @@ const ProductsScreen = () => {
       return field;
     }
     
-   
     if (typeof field === 'string') {
       if (field.startsWith('[')) {
         try {
@@ -225,26 +222,24 @@ const ProductsScreen = () => {
         image: product.image,
         supplierId: product.supplierId,
         color: Array.isArray(product.color) ? product.color[0] : product.color,
-      size: Array.isArray(product.size) ? product.size[0] : product.size,
-      quality: Array.isArray(product.quality) ? product.quality[0] : product.quality,
+        size: Array.isArray(product.size) ? product.size[0] : product.size,
+        quality: Array.isArray(product.quality) ? product.quality[0] : product.quality,
       };
       
-     
       const success = await addToCart(cartProduct);
       
       if (success) {
         Toast.show({
             type: 'success',
-            text1: 'Sucess',
+            text1: 'Success',
             text2: 'Product added to cart successfully'
-        })
+        });
       }
     } finally {
       // Clear loading state
       setAddingToCart({ status: false, productId: null });
     }
   };
-
 
   const handleProductPress = (product) => {
     // Only pass the product ID
@@ -331,7 +326,7 @@ const ProductsScreen = () => {
     >
       <Text 
         style={[
-          styles.categoryText,
+          styles.categoryItemText,
           selectedCategory === item.id && styles.selectedCategoryText
         ]}
       >
@@ -378,58 +373,69 @@ const ProductsScreen = () => {
     <SafeAreaView style={styles.container}>
       <NavigationHeader title="Products" />
       
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Design Your Cloth Banner */}
-        <View style={styles.designBannerContainer}>
-          <Image
-            source={headerImage}
-            style={styles.designBannerImage}
-            resizeMode="cover"
-          />
-          <View style={styles.designBannerOverlay}>
-            <Text style={styles.designBannerTitle}>Design your{'\n'}Cloth</Text>
-          </View>
-        </View>
-        
-        {/* Design Categories */}
-        <View style={styles.categoriesContainer}>
-          <FlatList
-            data={categories}
-            renderItem={renderCategoryItem}
-            keyExtractor={item => item.id}
-            horizontal={true}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.categoriesList}
-          />
-        </View>
-        
-        {/* Product Section Title */}
-        <View style={styles.sectionTitleContainer}>
-          <Text style={styles.sectionTitle}>
-            {selectedCategory === 'all' ? 'All Products' : 
-              `${categories.find(cat => cat.id === selectedCategory)?.name} Products`}
-          </Text>
-          {/* <TouchableOpacity>
-            <Text style={styles.seeAllText}>See All</Text>
-          </TouchableOpacity> */}
-        </View>
-        
-        {/* Products Grid */}
-        <View style={styles.productsContainer}>
-          {filteredProducts.length > 0 ? (
-            filteredProducts.map(item => (
-              <View key={item.id || item._id} style={styles.productItemWrapper}>
-                {renderProductItem({ item })}
+      {/* Use FlatList as main container instead of ScrollView for better performance and automatic chunking */}
+      <FlatList
+        data={[{ key: 'header' }]}
+        keyExtractor={(item) => item.key}
+        renderItem={() => (
+          <>
+            {/* Design Your Cloth Banner */}
+            <View style={styles.designBannerContainer}>
+              <Image
+                source={headerImage}
+                style={styles.designBannerImage}
+                resizeMode="cover"
+              />
+              <View style={styles.designBannerOverlay}>
+                <Text style={styles.designBannerTitle}>Design your{'\n'}Cloth</Text>
               </View>
-            ))
-          ) : (
-            <View style={styles.noProductsContainer}>
-              <Ionicons name="basket-outline" size={60} color="#b0bec5" />
-              <Text style={styles.noProductsText}>No products found in this category</Text>
             </View>
-          )}
-        </View>
-      </ScrollView>
+            
+            {/* Design Categories */}
+            <View style={styles.categoriesContainer}>
+              <FlatList
+                data={categories}
+                renderItem={renderCategoryItem}
+                keyExtractor={item => item.id}
+                horizontal={true}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.categoriesList}
+              />
+            </View>
+            
+            {/* Product Section Title */}
+            <View style={styles.sectionTitleContainer}>
+              <Text style={styles.sectionTitle}>
+                {selectedCategory === 'all' ? 'All Products' : 
+                  `${categories.find(cat => cat.id === selectedCategory)?.name} Products`}
+              </Text>
+            </View>
+            
+            {/* Products Grid */}
+            {filteredProducts.length > 0 ? (
+              <View style={styles.productsContainer}>
+                {/* Use chunks of 2 for the grid layout */}
+                {Array.from({ length: Math.ceil(filteredProducts.length / 2) }).map((_, rowIndex) => (
+                  <View key={`row-${rowIndex}`} style={styles.productRow}>
+                    {filteredProducts.slice(rowIndex * 2, rowIndex * 2 + 2).map((product) => (
+                      <View key={product.id || product._id} style={styles.productItemWrapper}>
+                        {renderProductItem({ item: product })}
+                      </View>
+                    ))}
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <View style={styles.noProductsContainer}>
+                <Ionicons name="basket-outline" size={60} color="#b0bec5" />
+                <Text style={styles.noProductsText}>No products found in this category</Text>
+              </View>
+            )}
+          </>
+        )}
+        contentContainerStyle={styles.flatListContent}
+        showsVerticalScrollIndicator={false}
+      />
     </SafeAreaView>
   );
 };
@@ -438,6 +444,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f8f8',
+  },
+  flatListContent: {
+    paddingBottom: 20,
   },
   loadingContainer: {
     flex: 1,
@@ -522,11 +531,10 @@ const styles = StyleSheet.create({
   selectedCategoryItem: {
     borderBottomColor: '#1e88e5',
   },
-//   categoryText: {
-//     fontSize: 12,
-//     color: '#6e6e6e',
-//     marginBottom: 2,
-//   },
+  categoryItemText: {
+    fontSize: 14,
+    color: '#6e6e6e',
+  },
   selectedCategoryText: {
     color: '#1e88e5',
     fontWeight: '500',
@@ -544,21 +552,18 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
-  seeAllText: {
-    color: '#1e88e5',
-    fontSize: 14,
-  },
   
   // Products Grid Styles
   productsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     paddingHorizontal: 8,
-    paddingBottom: 20,
+  },
+  productRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
   },
   productItemWrapper: {
-    width: '50%',
-    padding: 8,
+    width: '48%', // Slightly less than 50% to account for spacing
   },
   productItem: {
     backgroundColor: 'white',
@@ -569,7 +574,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
-    height: '100%',
+    height: null, // Allow height to be determined by content
   },
   imageContainer: {
     position: 'relative',
@@ -581,6 +586,7 @@ const styles = StyleSheet.create({
   },
   productInfo: {
     padding: 12,
+    minHeight: 100,
   },
   categoryText: {
     fontSize: 12,

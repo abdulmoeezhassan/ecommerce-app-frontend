@@ -59,6 +59,10 @@ const AccountScreen = () => {
             <Text style={styles.menuTitle}>Change Email or Password</Text>
             <MaterialIcons name="keyboard-arrow-right" size={24} color="#888" />
           </TouchableOpacity>
+          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/sign-up')}>
+            <Text style={styles.menuTitle}>Signup or Login</Text>
+            <MaterialIcons name="keyboard-arrow-right" size={24} color="#888" />
+          </TouchableOpacity>
         </View>
 
         <TouchableOpacity style={styles.logoutButton} onPress={() => router.push('/sign-out')}>

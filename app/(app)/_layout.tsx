@@ -94,7 +94,7 @@ export default function AppLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={colorScheme === "light" ? DarkTheme : DefaultTheme}>
       <StatusBar style="auto" />
       <Stack>
         <Stack.Screen name={"(drawer)"} options={{ headerShown: false }} />

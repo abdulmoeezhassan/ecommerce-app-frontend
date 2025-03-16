@@ -17,7 +17,7 @@ import { useCart } from '../../components/cartcontext';
 import NavigationHeader from './navigation-header';
 import Toast from 'react-native-toast-message';
 
-const API_BASE_URL = 'http://localhost:3000/api'; 
+const API_BASE_URL = 'https://ecommerce-app-backend-indol.vercel.app/api'; 
 
 const ShippingForm = () => {
   const router = useRouter();

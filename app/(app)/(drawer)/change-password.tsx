@@ -14,7 +14,7 @@ import { FontAwesome, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:3000";
+const API_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app";
 
 export default function ChangePassword() {
   const {

@@ -20,8 +20,8 @@ import axios from 'axios';
 import Toast from 'react-native-toast-message';
 
 const { width } = Dimensions.get('window');
-const IMAGE_BASE_URL = 'http://localhost:3000'; // Base URL for images
-const API_BASE_URL = 'http://localhost:3000/api/products'; // Base API URL
+const IMAGE_BASE_URL = 'https://ecommerce-app-backend-indol.vercel.app'; // Base URL for images
+const API_BASE_URL = 'https://ecommerce-app-backend-indol.vercel.app/api/products'; // Base API URL
 
 
 const ProductDetail = () => {
@@ -633,6 +633,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 50,
     marginTop: 12,
+    marginBottom:30,
   },
   disabledButton: {
     backgroundColor: '#aaa',

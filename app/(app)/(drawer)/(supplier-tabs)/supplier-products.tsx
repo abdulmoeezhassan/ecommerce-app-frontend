@@ -12,7 +12,7 @@ import axios from 'axios';
 import { AntDesign } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE_URL = "http://localhost:3000";
+const API_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app";
 
 export default function TabTwoScreen() {
   const [products, setProducts] = useState([]);

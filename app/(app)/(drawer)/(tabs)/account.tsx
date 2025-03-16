@@ -1,17 +1,54 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
-import { Feather, MaterialIcons } from '@expo/vector-icons';
+import { Feather, FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 
+const API_BASE_URL = 'https://ecommerce-app-backend-indol.vercel.app/api/';
+interface UserData {
+  imagePath?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+}
 const AccountScreen = () => {
   const router = useRouter();
+    const [userData, setUserData] = useState<UserData>({});
+    const [error, setError] = useState(false);
+  
+  const getAllOpportunities = async () => {
+    try {
+      const userId = await AsyncStorage.getItem("user_id");
+      if (!userId) {
+        throw new Error("User id not found!");
+      }
 
-  const user = {
-    name: 'Zee',
-    email: 'admin@gmail.com',
-    profilePic: require('@/assets/images/default-avatar.png'),
+      const response = await axios.get(`${API_BASE_URL}users/get-single-user/${userId}`);
+      setUserData(response.data?.data || []);
+
+    } catch (error) {
+      console.error("Failed to fetch templates:", error);
+    }
+  };
+  const capitalizeFirstLetter = (text) => {
+    if (!text) return "";
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
   };
 
+  useEffect(() => {
+    getAllOpportunities();
+  }, []);
+  // const user = {
+  //   name: 'Zee',
+  //   email: 'admin@gmail.com',
+  //   profilePic: require('@/assets/images/default-avatar.png'),
+  // };
+
+    function signOut() {
+     localStorage.clear();  
+     router.navigate('/sign-in')
+    }
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView>
@@ -22,17 +59,44 @@ const AccountScreen = () => {
           <Text style={styles.headerTitle}>My Account</Text>
           <View style={{ width: 24 }} />
         </View>
-
-        <View style={styles.profileSection}>
-          <Image source={user.profilePic} style={styles.profilePic} />
-          <View style={styles.userInfo}>
-            <Text style={styles.name}>{user.name}</Text>
-            <Text style={styles.email}>{user.email}</Text>
+  <View style={styles.userDetailsWrapper}>
+        {userData ? (
+          <View style={styles.userRow}>
+            <View className="flex flex-row items-center">
+              <Image
+                source={
+                  error || !userData?.imagePath
+                    ? require("@/assets/images/user-placeholder-img.png")
+                    : { uri: userData?.imagePath }
+                }
+                style={styles.icon}
+                onError={() => setError(true)}
+              />
+              <View style={styles.userTextWrapper}>
+                <Text style={styles.userName}>
+                  {capitalizeFirstLetter(
+                    userData?.firstName + " " + userData?.lastName
+                  )}
+                </Text>
+                <Text style={styles.userEmail}>{userData?.email}</Text>
+              </View>
+            </View>
+            {/* <FontAwesome
+              name="pencil"
+              size={18}
+              color="black"
+              onPress={() => router.push("/profile")}
+            /> */}
           </View>
-        </View>
-
+        ) : (
+          <View>
+            <Text style={styles.userName}>John Doe</Text>
+            <Text style={styles.userEmail}>john@email.com</Text>
+          </View>
+        )}
+</View>
         <View style={styles.menuContainer}>
-          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/')}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/view-all-orders')}>
             <Text style={styles.menuTitle}>My Order</Text>
             <View style={styles.rightContent}>
               <Text style={styles.viewAllText}>View all orders</Text>
@@ -65,7 +129,7 @@ const AccountScreen = () => {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.logoutButton} onPress={() => router.push('/sign-out')}>
+        <TouchableOpacity style={styles.logoutButton} onPress={signOut}>
           <Text style={styles.logoutText}>Log Out</Text>
           <Feather name="log-out" size={18} color="white" style={styles.logoutIcon} />
         </TouchableOpacity>
@@ -91,6 +155,32 @@ const styles = StyleSheet.create({
   logoutButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: 'black', marginHorizontal: 20, marginVertical: 20, paddingVertical: 16, borderRadius: 30 },
   logoutText: { color: 'white', fontSize: 16, fontWeight: '600', marginRight: 8 },
   logoutIcon: { marginLeft: 4 },
+  icon: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  userTextWrapper: {
+    marginLeft: 10,
+  },
+  userName: {
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  userEmail: {
+    fontSize: 14,
+    color: "gray",
+  },
+  userRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  userDetailsWrapper: {
+    marginTop: 10,
+    marginLeft: 5,
+    flex: 1,
+    alignItems: "center",
+  },
 });
 
 export default AccountScreen;

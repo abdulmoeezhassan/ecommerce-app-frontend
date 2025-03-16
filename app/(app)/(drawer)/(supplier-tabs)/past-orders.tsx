@@ -205,12 +205,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 'bold',
+    color: 'black'
   },
   centeredContent: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    backgroundColor: 'white'
   },
   errorText: {
     color: 'red',
@@ -221,6 +223,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginTop: 16,
+    color: '#666',
   },
   emptySubText: {
     fontSize: 14,

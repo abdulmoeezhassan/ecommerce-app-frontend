@@ -1,6 +1,4 @@
-import { StyleSheet, Image, Platform, TouchableOpacity, FlatList, View } from 'react-native';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { StyleSheet, Image, Platform, TouchableOpacity, FlatList, View, Text } from 'react-native';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -77,80 +75,80 @@ export default function HomeScreen() {
     <TouchableOpacity
       style={styles.orderCard}
     >
-      <ThemedView style={styles.cardContent}>
-        <ThemedView style={styles.orderHeader}>
-          <ThemedView style={styles.statusBadge}>
-            <ThemedText style={styles.statusText}>{item.orderStatus}</ThemedText>
-          </ThemedView>
-          <ThemedText style={styles.orderDate}>
+      <View style={styles.cardContent}>
+        <View style={styles.orderHeader}>
+          <View style={styles.statusBadge}>
+            <Text style={styles.statusText}>{item.orderStatus}</Text>
+          </View>
+          <Text style={styles.orderDate}>
             {new Date(item.createdAt).toLocaleDateString()}
-          </ThemedText>
-        </ThemedView>
+          </Text>
+        </View>
 
-        <ThemedView style={styles.orderInfo}>
+        <View style={styles.orderInfo}>
           <View style={styles.infoRow}>
-            <ThemedText style={styles.infoLabel}>Order ID:</ThemedText>
-            <ThemedText style={styles.infoValue}>#{item._id.substring(0, 8)}</ThemedText>
+            <Text style={styles.infoLabel}>Order ID:</Text>
+            <Text style={styles.infoValue}>#{item._id.substring(0, 8)}</Text>
           </View>
 
           <View style={styles.infoRow}>
-            <ThemedText style={styles.infoLabel}>Total Amount:</ThemedText>
-            <ThemedText style={styles.infoValue}>PKR {item.totalAmount.toFixed(2)}</ThemedText>
+            <Text style={styles.infoLabel}>Total Amount:</Text>
+            <Text style={styles.infoValue}>PKR {item.totalAmount.toFixed(2)}</Text>
           </View>
 
           <View style={styles.infoRow}>
-            <ThemedText style={styles.infoLabel}>Payment:</ThemedText>
-            <ThemedView style={[styles.paymentBadge,
+            <Text style={styles.infoLabel}>Payment:</Text>
+            <View style={[styles.paymentBadge,
             item.paymentStatus === "Paid" ? styles.paidBadge : styles.pendingBadge]}>
-              <ThemedText style={styles.paymentText}>{item.paymentStatus}</ThemedText>
-            </ThemedView>
+              <Text style={styles.paymentText}>{item.paymentStatus}</Text>
+            </View>
           </View>
 
           {item.userInfo && (
-            <ThemedView style={styles.customerInfo}>
-              <ThemedText style={styles.sectionTitle}>Customer Information</ThemedText>
+            <View style={styles.customerInfo}>
+              <Text style={styles.sectionTitle}>Customer Information</Text>
               <View style={styles.infoRow}>
-                <ThemedText style={styles.infoLabel}>Email:</ThemedText>
-                <ThemedText style={styles.infoValue}>{item.userInfo.email}</ThemedText>
+                <Text style={styles.infoLabel}>Email:</Text>
+                <Text style={styles.infoValue}>{item.userInfo.email}</Text>
               </View>
               <View style={styles.infoRow}>
-                <ThemedText style={styles.infoLabel}>Address:</ThemedText>
-                <ThemedText style={styles.infoValue}>{item.userInfo.address}</ThemedText>
+                <Text style={styles.infoLabel}>Address:</Text>
+                <Text style={styles.infoValue}>{item.userInfo.address}</Text>
               </View>
-            </ThemedView>
+            </View>
           )}
-        </ThemedView>
-      </ThemedView>
+        </View>
+      </View>
     </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <ThemedText style={styles.title}>All Orders</ThemedText>
+        <Text style={styles.title}>All Orders</Text>
       </View>
 
       {loading && (
-        <ThemedView style={styles.centeredContent}>
-          <ThemedText>Loading orders...</ThemedText>
-        </ThemedView>
+        <View style={styles.centeredContent}>
+          <Text style={styles.loadingText}>Loading orders...</Text>
+        </View>
       )}
 
       {error && (
-        <ThemedView style={styles.centeredContent}>
+        <View style={styles.centeredContent}>
           <AntDesign name="exclamationcircle" size={24} color="red" />
-          <ThemedText style={styles.errorText}>{error}</ThemedText>
-        </ThemedView>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
       )}
 
       {!loading && !error && orders.length === 0 && (
-        <ThemedView style={styles.centeredContent}>
+        <View style={styles.centeredContent}>
           <AntDesign name="inbox" size={48} color="#888" />
-          <ThemedText style={styles.emptyText}>No orders found</ThemedText>
-          <ThemedText style={styles.emptySubText}>
+          <Text style={styles.emptyText}>No orders found</Text>
+          <Text style={styles.emptySubText}>
             Your orders will appear here once customers place them
-          </ThemedText>
-        </ThemedView>
+          </Text>
+        </View>
       )}
 
       {!loading && !error && orders.length > 0 && (
@@ -175,6 +173,7 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    backgroundColor: 'white',
     marginTop: 12,
   },
   actionButton: {
@@ -195,22 +194,28 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
-
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
+    backgroundColor: 'white'
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
+    color: 'black'
   },
   centeredContent: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    backgroundColor: 'white'
+  },
+  loadingText: {
+    color: 'black',
+    fontSize: 16,
   },
   errorText: {
     color: 'red',
@@ -221,20 +226,22 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginTop: 16,
+    color: 'black'
   },
   emptySubText: {
     fontSize: 14,
-    color: '#666',
+    color: 'black',
     marginTop: 8,
     textAlign: 'center',
   },
   orderList: {
     padding: 12,
+    backgroundColor: 'white'
   },
   orderCard: {
     marginBottom: 16,
     borderRadius: 12,
-    backgroundColor: '#fff',
+    backgroundColor: 'white',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -244,12 +251,14 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     padding: 16,
+    backgroundColor: 'white'
   },
   orderHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+    backgroundColor: 'white'
   },
   statusBadge: {
     backgroundColor: '#007bff',
@@ -258,32 +267,35 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   statusText: {
-    color: '#fff',
+    color: 'white',
     fontSize: 12,
     fontWeight: 'bold',
   },
   orderDate: {
     fontSize: 14,
-    color: '#666',
+    color: 'black',
   },
   orderInfo: {
     borderTopWidth: 1,
     borderTopColor: '#eee',
     paddingTop: 12,
+    backgroundColor: 'white'
   },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
+    backgroundColor: 'white'
   },
   infoLabel: {
     fontSize: 14,
-    color: '#666',
+    color: 'black',
   },
   infoValue: {
     fontSize: 14,
     fontWeight: '500',
+    color: 'black'
   },
   paymentBadge: {
     paddingVertical: 2,
@@ -297,7 +309,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ff9800',
   },
   paymentText: {
-    color: '#fff',
+    color: 'white',
     fontSize: 12,
     fontWeight: '500',
   },
@@ -306,10 +318,12 @@ const styles = StyleSheet.create({
     borderTopColor: '#eee',
     marginTop: 12,
     paddingTop: 12,
+    backgroundColor: 'white'
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 8,
+    color: 'black'
   },
 });

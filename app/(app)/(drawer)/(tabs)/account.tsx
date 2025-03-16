@@ -8,7 +8,7 @@ const AccountScreen = () => {
 
   const user = {
     name: 'Zee',
-    email: 'lisajain@gmail.com',
+    email: 'admin@gmail.com',
     profilePic: require('@/assets/images/default-avatar.png'),
   };
 
@@ -55,7 +55,7 @@ const AccountScreen = () => {
             <MaterialIcons name="keyboard-arrow-right" size={24} color="#888" />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/')}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/forgot-password')}>
             <Text style={styles.menuTitle}>Change Email or Password</Text>
             <MaterialIcons name="keyboard-arrow-right" size={24} color="#888" />
           </TouchableOpacity>

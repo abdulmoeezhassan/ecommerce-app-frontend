@@ -17,10 +17,12 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useCart } from '../../components/cartcontext';
 import NavigationHeader from './navigation-header';
 import axios from 'axios';
+import Toast from 'react-native-toast-message';
 
 const { width } = Dimensions.get('window');
 const IMAGE_BASE_URL = 'http://localhost:3000'; // Base URL for images
 const API_BASE_URL = 'http://localhost:3000/api/products'; // Base API URL
+
 
 const ProductDetail = () => {
   const navigation = useNavigation();
@@ -223,7 +225,11 @@ const ProductDetail = () => {
       const success = await addToCart(cartProduct);
       
       if (success) {
-        Alert.alert('Success', 'Product added to cart successfully');
+        Toast.show({
+          type: 'success',
+          text1: 'Product Added to Cart',
+          text2: `${quantity} x ${product.name}`,
+        })
       }
       // If not successful, the cart context already showed an error message
     } finally {

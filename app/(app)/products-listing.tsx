@@ -14,10 +14,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import axios from 'axios';
 import NavigationHeader from './navigation-header';
 import { useCart } from '../../components/cartcontext';
+import Toast from 'react-native-toast-message';
 
 // API Configuration
 const API_BASE_URL = 'http://localhost:3000/api/products/get-all-products'; // Main API endpoint
@@ -33,21 +34,32 @@ const ProductsScreen = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [addingToCart, setAddingToCart] = useState({ status: false, productId: null });
-  
+  const { category } = useLocalSearchParams();
   const navigation = useNavigation();
   const router = useRouter();
-  const { addToCart, getCartSupplierId } = useCart(); // Use the cart context with supplier validation
-
+  const { addToCart, getCartSupplierId } = useCart(); 
+  const headerImage = require("@/assets/images/headerpic.png");
   // Fetch products from API
   useEffect(() => {
     fetchProducts();
   }, []);
 
+  // Set the selected category when categories are loaded and category param exists
+  useEffect(() => {
+    if (categories.length > 0 && category) {
+      // Find the category ID that matches the passed category name
+      const categoryItem = categories.find(cat => cat.name === category);
+      if (categoryItem) {
+        setSelectedCategory(categoryItem.id);
+      }
+    }
+  }, [categories, category]);
+
   const fetchProducts = async () => {
     try {
       setIsLoading(true);
       
-      // Use axios with responseType 'text' to get raw response
+      
       const response = await axios.get(`${API_BASE_URL}`, {
         responseType: 'text'
       });
@@ -59,10 +71,10 @@ const ProductsScreen = () => {
         // Process the products array
         const processedProducts = jsonData.products.map(product => ({
           ...product,
-          id: product._id, // Ensure id exists for cart context
+          id: product._id,
           // Fix the image path handling
           image: formatImageUrl(product.image),
-          // Parse nested JSON strings in arrays if present
+         
           color: parseArrayField(product.color),
           quality: parseArrayField(product.quality),
           size: parseArrayField(product.size)
@@ -84,13 +96,12 @@ const ProductsScreen = () => {
     }
   };
 
-  // Improved function to format image URLs correctly
   const formatImageUrl = (imagePath) => {
     if (!imagePath) {
       return 'https://via.placeholder.com/150';
     }
     
-    // If it's already a full URL
+ 
     if (imagePath.startsWith('http')) {
       return imagePath;
     }
@@ -98,7 +109,7 @@ const ProductsScreen = () => {
     // Replace backslashes with forward slashes
     const normalizedPath = imagePath.replace(/\\/g, '/');
     
-    // Make sure we don't have double slashes when joining paths
+ 
     const baseUrlWithoutTrailingSlash = IMAGE_BASE_URL.endsWith('/') 
       ? IMAGE_BASE_URL.slice(0, -1) 
       : IMAGE_BASE_URL;
@@ -110,10 +121,10 @@ const ProductsScreen = () => {
     return `${baseUrlWithoutTrailingSlash}/${pathWithoutLeadingSlash}`;
   };
 
-  // Parse the special response format "se{...json...}"
+
   const parseResponse = (responseText) => {
     try {
-      // Find where the JSON object starts
+ 
       const jsonStartIndex = responseText.indexOf('{');
       if (jsonStartIndex === -1) {
         console.error('No JSON data found in the response');
@@ -129,13 +140,13 @@ const ProductsScreen = () => {
     }
   };
 
-  // Parse array fields that might be nested JSON strings
+  // Parse array fields 
   const parseArrayField = (field) => {
     if (!field) return [];
     
     // If already an array
     if (Array.isArray(field)) {
-      // Handle case where array contains JSON strings
+     
       if (field.length > 0 && typeof field[0] === 'string' && field[0].startsWith('[')) {
         try {
           return JSON.parse(field[0]);
@@ -146,7 +157,7 @@ const ProductsScreen = () => {
       return field;
     }
     
-    // If it's a string that looks like JSON
+   
     if (typeof field === 'string') {
       if (field.startsWith('[')) {
         try {
@@ -211,18 +222,22 @@ const ProductsScreen = () => {
         name: product.name,
         price: product.price,
         quantity: 1,
-        // Add image to cart item for display in cart
         image: product.image,
-        // Include supplierId
-        supplierId: product.supplierId
+        supplierId: product.supplierId,
+        color: Array.isArray(product.color) ? product.color[0] : product.color,
+      size: Array.isArray(product.size) ? product.size[0] : product.size,
+      quality: Array.isArray(product.quality) ? product.quality[0] : product.quality,
       };
       
-      // Use the updated addToCart that returns success status
+     
       const success = await addToCart(cartProduct);
       
       if (success) {
-        // Optional: show success message
-        // Alert.alert('Success', 'Product added to cart');
+        Toast.show({
+            type: 'success',
+            text1: 'Sucess',
+            text2: 'Product added to cart successfully'
+        })
       }
     } finally {
       // Clear loading state
@@ -230,7 +245,7 @@ const ProductsScreen = () => {
     }
   };
 
-  // Handle product press - navigate to product details
+
   const handleProductPress = (product) => {
     // Only pass the product ID
     router.push({
@@ -367,7 +382,7 @@ const ProductsScreen = () => {
         {/* Design Your Cloth Banner */}
         <View style={styles.designBannerContainer}>
           <Image
-            source={{ uri: 'https://s3-alpha-sig.figma.com/img/eaca/75f8/d634283bec04f97c63ec4ea1d9763d77?Expires=1742774400&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=t~QAzLnVRq814zf6T8ivWJB-euaiGBPZ-ru4Y8d-H5yAZor2VcM7zcX3mOJrWTNsfya~677N23MI~P~a4k1z2ldtWHgb2-yToB2ixZPV9s0XfHK4Ar9tpM9UikbdxAv5Us32X-GY~m7sJTrKDKxdc7w-QNqSWfP3B7MBXrm5q6Smd3tuiFuTuFfq5PGU5sVnPeAaDKLSdS9507~mWPq9ErvBu7d0YfgcmAjnnA1T5VKkFwaQjJ5l~npFlia1PvUGTH8Js9PG6DGKa~KQ7tBYJBzQL7kHszCBCWcKjD2zrncQRIZ6kdtu3k35IS0Q7lwBhmmxB9LyrZ7Ux4yQGsnbWg__' }}
+            source={headerImage}
             style={styles.designBannerImage}
             resizeMode="cover"
           />
@@ -394,9 +409,9 @@ const ProductsScreen = () => {
             {selectedCategory === 'all' ? 'All Products' : 
               `${categories.find(cat => cat.id === selectedCategory)?.name} Products`}
           </Text>
-          <TouchableOpacity>
+          {/* <TouchableOpacity>
             <Text style={styles.seeAllText}>See All</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
         
         {/* Products Grid */}
@@ -558,7 +573,7 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     position: 'relative',
-    backgroundColor: '#f5f5f5', // Light gray background for image loading
+    backgroundColor: '#f5f5f5', 
   },
   productImage: {
     width: '100%',

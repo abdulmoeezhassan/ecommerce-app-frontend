@@ -37,15 +37,7 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: "Explore",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="paperplane.fill" color={color} />
-          ),
-        }}
-      />
+      
       <Tabs.Screen
         name="cart"
         options={{
@@ -55,7 +47,15 @@ export default function TabLayout() {
           ),
         }}
       />
-
+<Tabs.Screen
+        name="explore"
+        options={{
+          title: "Notifications",
+          tabBarIcon: ({ color }) => (
+            <FontAwesome name="bell" size={24} color={color} />
+          ),
+        }}
+      />
       <Tabs.Screen
         name="account"
         options={{

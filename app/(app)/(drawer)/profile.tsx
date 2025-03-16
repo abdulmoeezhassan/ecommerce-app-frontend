@@ -8,6 +8,10 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  StatusBar,
+  Platform,
+  Modal,
+  ScrollView,
 } from "react-native";
 import * as ImagePicker from "react-native-image-picker";
   import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -217,6 +221,12 @@ export default function Signup() {
         >
           <FontAwesome name="pencil" size={18} color="white" />
         </TouchableOpacity>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+      
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>My Account</Text>
       </View>
 
       <View style={styles.formContainer}>
@@ -322,6 +332,235 @@ export default function Signup() {
       </View>
       {/* </ImageBackground> */}
     </View>
+      
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.formContainer}>
+          <Text style={styles.headerText}>Complete Your Profile</Text>
+          
+          {/* Profile Image */}
+          <TouchableOpacity style={styles.profileImageContainer} onPress={pickImage}>
+            <Image
+              source={profileImage ? { uri: profileImage } : require('@/assets/images/default-avatar.png')}
+              defaultSource={require('@/assets/images/default-avatar.png')}
+              style={styles.profileImage}
+            />
+            <View style={styles.uploadIconContainer}>
+              <Ionicons name="camera" size={16} color="white" />
+            </View>
+          </TouchableOpacity>
+          
+          {/* Full Name */}
+          <Controller
+            control={control}
+            name="fullName"
+            rules={{
+              required: "Required",
+            }}
+            render={({ field: { onChange, value, onBlur } }) => (
+              <View>
+                <Text style={styles.label}>Full Name</Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    focusedInput === "fullName" && styles.inputFocused,
+                    errors.fullName && styles.inputError,
+                  ]}
+                  placeholder=""
+                  value={value}
+                  onBlur={onBlur}
+                  onFocus={() => setFocusedInput("fullName")}
+                  onChangeText={onChange}
+                />
+              </View>
+            )}
+          />
+          
+          {/* Gender */}
+          <Controller
+            control={control}
+            name="gender"
+            rules={{
+              required: "Required",
+            }}
+            render={({ field: { onChange, value } }) => (
+              <View>
+                <Text style={styles.label}>Gender</Text>
+                <TouchableOpacity 
+                  style={[
+                    styles.input, 
+                    styles.genderInput,
+                    errors.gender && styles.inputError
+                  ]} 
+                  onPress={() => setGenderModalVisible(true)}
+                >
+                  <Text style={value ? styles.inputText : styles.placeholderText}>
+                    {value || ""}
+                  </Text>
+                  <Ionicons name="chevron-down" size={18} color="#777" />
+                </TouchableOpacity>
+                
+                {/* Gender Selection Modal */}
+                <Modal
+                  transparent={true}
+                  visible={genderModalVisible}
+                  animationType="slide"
+                  onRequestClose={() => setGenderModalVisible(false)}
+                >
+                  <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                      <Text style={styles.modalTitle}>Select Gender</Text>
+                      {genderOptions.map((option) => (
+                        <TouchableOpacity
+                          key={option}
+                          style={styles.optionItem}
+                          onPress={() => {
+                            onChange(option);
+                            setGenderModalVisible(false);
+                          }}
+                        >
+                          <Text style={[
+                            styles.optionText,
+                            value === option && styles.selectedOption
+                          ]}>
+                            {option}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                      <TouchableOpacity
+                        style={styles.cancelButton}
+                        onPress={() => setGenderModalVisible(false)}
+                      >
+                        <Text style={styles.cancelText}>Cancel</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </Modal>
+              </View>
+            )}
+          />
+          
+          {/* Address */}
+          <Controller
+            control={control}
+            name="address"
+            rules={{
+              required: "Required",
+            }}
+            render={({ field: { onChange, value, onBlur } }) => (
+              <View>
+                <Text style={styles.label}>Address</Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    focusedInput === "address" && styles.inputFocused,
+                    errors.address && styles.inputError,
+                  ]}
+                  placeholder=""
+                  value={value}
+                  onBlur={onBlur}
+                  onFocus={() => setFocusedInput("address")}
+                  onChangeText={onChange}
+                  multiline={true}
+                  numberOfLines={2}
+                />
+              </View>
+            )}
+          />
+          
+          {/* Mobile Number */}
+          <Controller
+            control={control}
+            name="mobileNumber"
+            rules={{
+              required: "Required",
+            }}
+            render={({ field: { onChange, value, onBlur } }) => (
+              <View>
+                <Text style={styles.label}>Mobile Number</Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    focusedInput === "mobileNumber" && styles.inputFocused,
+                    errors.mobileNumber && styles.inputError,
+                  ]}
+                  placeholder=""
+                  value={value}
+                  onBlur={onBlur}
+                  onFocus={() => setFocusedInput("mobileNumber")}
+                  keyboardType="phone-pad"
+                  onChangeText={onChange}
+                />
+              </View>
+            )}
+          />
+          
+          {/* City */}
+          <Controller
+            control={control}
+            name="city"
+            rules={{
+              required: "Required",
+            }}
+            render={({ field: { onChange, value, onBlur } }) => (
+              <View>
+                <Text style={styles.label}>City</Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    focusedInput === "city" && styles.inputFocused,
+                    errors.city && styles.inputError,
+                  ]}
+                  placeholder=""
+                  value={value}
+                  onBlur={onBlur}
+                  onFocus={() => setFocusedInput("city")}
+                  onChangeText={onChange}
+                />
+              </View>
+            )}
+          />
+          
+          {/* Country */}
+          <Controller
+            control={control}
+            name="country"
+            rules={{
+              required: "Required",
+            }}
+            render={({ field: { onChange, value, onBlur } }) => (
+              <View>
+                <Text style={styles.label}>Country</Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    focusedInput === "country" && styles.inputFocused,
+                    errors.country && styles.inputError,
+                  ]}
+                  placeholder=""
+                  value={value}
+                  onBlur={onBlur}
+                  onFocus={() => setFocusedInput("country")}
+                  onChangeText={onChange}
+                />
+              </View>
+            )}
+          />
+          
+          {/* Submit Button */}
+          <TouchableOpacity 
+            style={styles.button} 
+            activeOpacity={0.8} 
+            onPress={handleSubmit(onSubmit)}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <Text style={styles.buttonText}>Complete Profile</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -333,12 +572,17 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     overflowY: "auto",
   },
+  scrollContainer: {
+    flexGrow: 1,
+    padding: 20,
+  },
   formContainer: {
     width: "100%",
     padding: 20,
     backgroundColor: "white",
     borderTopLeftRadius: 70,
     elevation: 10,
+    flex: 1,
   },
   headerText: {
     fontSize: 24,
@@ -388,6 +632,22 @@ const styles = StyleSheet.create({
     marginLeft: "24%",
     marginTop: 20,
     marginBottom: 20,
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 15,
+    textAlign: "center",
   },
   profileImage: {
     width: 200,

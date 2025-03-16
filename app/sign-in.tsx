@@ -74,12 +74,12 @@ export default function SignIn() {
       signIn();
       setLoading(false);
 
-      if (responseData?.user?.role === "Supplier") {
-        router.push("/(app)/(drawer)/(supplier-tabs)" as any);
+      if (responseData?.user?.role === "Seller") {
+        router.push("/active-orders" as any);
       } else if (responseData?.user?.role === "Admin") {
-        router.replace("/active-order" as any);
+        router.replace("/all-orders" as any);
       } else {
-        router.replace("/(app)/(drawer)/(tabs)" as any);
+        router.replace("/" as any);
       }
 
       Toast.show({

@@ -10,7 +10,7 @@ import Toast from 'react-native-toast-message';
 
 const API_BASE_URL = "http://localhost:3000/api";
 
-export default function TabTwoScreen() {
+export default function HomeScreen() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -25,7 +25,7 @@ export default function TabTwoScreen() {
         throw new Error('User ID not found in storage.');
       }
 
-      const response = await axios.get(`${API_BASE_URL}/orders/supplier/${id}`);
+      const response = await axios.get(`${API_BASE_URL}/orders/get-all-orders`);
 
       if (response.data && Array.isArray(response.data.orders)) {
         setOrders(response.data.orders);
@@ -119,21 +119,6 @@ export default function TabTwoScreen() {
               </View>
             </ThemedView>
           )}
-
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.cancelButton]}
-              onPress={() => updateOrderStatus(item._id, "Delivered")}
-            >
-              <ThemedText style={styles.buttonText}>Delivered</ThemedText>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.rejectButton]}
-              onPress={() => updateOrderStatus(item._id, "Rejected")}
-            >
-              <ThemedText style={styles.buttonText}>Reject</ThemedText>
-            </TouchableOpacity>
-          </View>
         </ThemedView>
       </ThemedView>
     </TouchableOpacity>
@@ -142,7 +127,7 @@ export default function TabTwoScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <ThemedText style={styles.title}>My Orders</ThemedText>
+        <ThemedText style={styles.title}>All Orders</ThemedText>
       </View>
 
       {loading && (

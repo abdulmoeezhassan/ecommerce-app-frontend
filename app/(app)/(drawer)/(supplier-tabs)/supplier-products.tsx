@@ -10,6 +10,7 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { AntDesign } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_BASE_URL = "http://localhost:3000";
 
@@ -22,19 +23,30 @@ export default function TabTwoScreen() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const user_id = localStorage.getItem('user_id');
+        const user_id = await AsyncStorage.getItem('user_id');
         
         if (!user_id) {
-          throw new Error('User ID not found in localStorage');
+          throw new Error('User ID not found');
         }
         
         const response = await axios.get(`${API_BASE_URL}/api/products/get-products-by-supplier/${user_id}`);
-        console.log(response);
-        setProducts(response.data?.products || []);
-        setLoading(false);
+        
+        if (response.data && Array.isArray(response.data.products)) {
+          setProducts(response.data.products);
+        } else {
+          setProducts([]);
+        }
+        
       } catch (err) {
         console.error('Error fetching products:', err);
-        setError(err.message);
+        
+        if (err.response && err.response.status === 404) {
+          setProducts([]);
+          setError(null); 
+        } else {
+          setError(err.message || 'Failed to fetch products');
+        }
+      } finally {
         setLoading(false);
       }
     };

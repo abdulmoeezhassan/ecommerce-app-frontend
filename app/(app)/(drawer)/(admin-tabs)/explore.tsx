@@ -7,6 +7,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { router } from 'expo-router';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_BASE_URL = "http://localhost:3000";
 
@@ -19,19 +20,34 @@ export default function TabTwoScreen() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const user_id = localStorage.getItem('user_id');
-        
+        // For React Native, use AsyncStorage instead of localStorage
+        const user_id = await AsyncStorage.getItem('user_id');
+
         if (!user_id) {
-          throw new Error('User ID not found in localStorage');
+          throw new Error('User ID not found');
+        }
+
+        const response = await axios.get(`${API_BASE_URL}/api/products/get-products-by-supplier/${user_id}`);
+        
+        // Check if the response contains products data
+        if (response.data && Array.isArray(response.data.products)) {
+          setProducts(response.data.products);
+        } else {
+          // Handle case where products array is not in expected format
+          setProducts([]);
         }
         
-        const response = await axios.get(`${API_BASE_URL}/api/products/get-products-by-supplier/${user_id}`);
-        console.log(response);
-        setProducts(response.data?.products || []);
-        setLoading(false);
       } catch (err) {
         console.error('Error fetching products:', err);
-        setError(err.message);
+        
+        // Handle 404 errors more gracefully
+        if (err.response && err.response.status === 404) {
+          setProducts([]);
+          setError(null); // Don't show error for 404, just empty state
+        } else {
+          setError(err.message || 'Failed to fetch products');
+        }
+      } finally {
         setLoading(false);
       }
     };
@@ -44,7 +60,7 @@ export default function TabTwoScreen() {
   };
 
   const renderProductCard = ({ item }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={styles.productCard}
     >
       <ThemedView style={styles.cardContent}>
@@ -57,27 +73,27 @@ export default function TabTwoScreen() {
           style={styles.productImage}
           onError={() => {
             console.log(`Failed to load image: ${API_BASE_URL}/${item.image}`);
-            setImageErrors(prev => ({...prev, [item._id]: true}));
+            setImageErrors(prev => ({ ...prev, [item._id]: true }));
           }}
         />
-        
+
         <ThemedView style={styles.categoryBadge}>
           <ThemedText style={styles.categoryText}>{item.category}</ThemedText>
         </ThemedView>
-        
+
         <ThemedView style={styles.productInfo}>
           <View className='flex flex-row justify-between w-full'>
-          <ThemedText style={styles.productName}>{item.name}</ThemedText>
-          <ThemedText style={styles.productPrice}>${item.price.toFixed(2)}</ThemedText>
+            <ThemedText style={styles.productName}>{item.name}</ThemedText>
+            <ThemedText style={styles.productPrice}>${item.price.toFixed(2)}</ThemedText>
           </View>
-          
+
           {item.color && item.color.length > 0 && (
             <ThemedView style={styles.attributeRow}>
               <ThemedText style={styles.attributeLabel}>Colors:</ThemedText>
               <ThemedView style={styles.colorContainer}>
                 {item.color.map((colorName, index) => (
-                  <ThemedView 
-                    key={index} 
+                  <ThemedView
+                    key={index}
                     style={[
                       styles.colorDot,
                       { backgroundColor: getColorHex(colorName) }
@@ -87,42 +103,42 @@ export default function TabTwoScreen() {
               </ThemedView>
             </ThemedView>
           )}
-          
+
           {item.size && (
-  <ThemedView style={styles.attributeRow}>
-    <ThemedText style={styles.attributeLabel}>Sizes:</ThemedText>
-    <ThemedView style={styles.chipContainer}>
-      {Array.isArray(item.size) ? 
-        item.size.map((size, index) => (
-          <ThemedView key={index} style={styles.chip}>
-            <ThemedText style={styles.chipText}>{size.replace(/[\[\]"']/g, '')}</ThemedText>
-          </ThemedView>
-        ))
-        :
-        <ThemedView style={styles.chip}>
-          <ThemedText style={styles.chipText}>{item.size.replace(/[\[\]"']/g, '')}</ThemedText>
-        </ThemedView>
-      }
-    </ThemedView>
-  </ThemedView>
-)}
-          
+            <ThemedView style={styles.attributeRow}>
+              <ThemedText style={styles.attributeLabel}>Sizes:</ThemedText>
+              <ThemedView style={styles.chipContainer}>
+                {Array.isArray(item.size) ?
+                  item.size.map((size, index) => (
+                    <ThemedView key={index} style={styles.chip}>
+                      <ThemedText style={styles.chipText}>{size.replace(/[\[\]"']/g, '')}</ThemedText>
+                    </ThemedView>
+                  ))
+                  :
+                  <ThemedView style={styles.chip}>
+                    <ThemedText style={styles.chipText}>{item.size.replace(/[\[\]"']/g, '')}</ThemedText>
+                  </ThemedView>
+                }
+              </ThemedView>
+            </ThemedView>
+          )}
+
           {item.quality && (
-  <ThemedView style={styles.attributeRow}>
-    <ThemedText style={styles.attributeLabel}>Quality:</ThemedText>
-    <ThemedText style={styles.qualityText}>
-      {Array.isArray(item.quality) ? 
-        item.quality.join(', ').replace(/[\[\]"']/g, '') 
-        : 
-        item.quality.replace(/[\[\]"']/g, '')}
-    </ThemedText>
-  </ThemedView>
-)}
+            <ThemedView style={styles.attributeRow}>
+              <ThemedText style={styles.attributeLabel}>Quality:</ThemedText>
+              <ThemedText style={styles.qualityText}>
+                {Array.isArray(item.quality) ?
+                  item.quality.join(', ').replace(/[\[\]"']/g, '')
+                  :
+                  item.quality.replace(/[\[\]"']/g, '')}
+              </ThemedText>
+            </ThemedView>
+          )}
         </ThemedView>
       </ThemedView>
     </TouchableOpacity>
   );
-  
+
   // Helper function to convert color names to hex codes
   const getColorHex = (colorName) => {
     const colorMap = {
@@ -139,7 +155,7 @@ export default function TabTwoScreen() {
       brown: '#795548',
       // Add more colors as needed
     };
-    
+
     return colorMap[colorName.toLowerCase()] || '#888888';
   };
 
@@ -158,18 +174,18 @@ export default function TabTwoScreen() {
         </ThemedView>
       )}
 
-      {!loading && !error && products.length === 0 && (
+      {!loading && !error && products.length === 0 &&(
         <ThemedView style={styles.centeredContent}>
           <AntDesign name="inbox" size={48} color="#888" />
           <ThemedText style={styles.emptyText}>No products found</ThemedText>
-          <ThemedText style={styles.emptySubText}>
+          {/* <ThemedText style={styles.emptySubText}>
             Tap the button above to add your first product
-          </ThemedText>
+          </ThemedText> */}
         </ThemedView>
       )}
 
       {!loading && !error && products.length > 0 && (
-        <FlatList 
+        <FlatList
           data={products}
           renderItem={renderProductCard}
           keyExtractor={(item) => item._id.toString()}

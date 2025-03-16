@@ -40,6 +40,7 @@ const NavigationHeader = ({ title, }) => {
   const cartItemCount = cart.reduce((total, item) => total + item.quantity, 0);
 
   return (
+    
     <View style={styles.headerContainer}>
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
       

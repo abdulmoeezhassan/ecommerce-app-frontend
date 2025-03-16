@@ -20,7 +20,7 @@ import * as ImagePicker from "react-native-image-picker";
 import axios from "axios";
 import { Picker } from "@react-native-picker/picker";
 
-const API_BASE_URL = "http://localhost:3000";
+const API_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app";
 
 export default function AddProduct() {
   const [focusedInput, setFocusedInput] = useState(null);

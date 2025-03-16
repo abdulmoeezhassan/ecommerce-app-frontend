@@ -17,7 +17,7 @@ import {
   import Toast from 'react-native-toast-message';
   import AsyncStorage from "@react-native-async-storage/async-storage";
   // import userService from "../services/user-service";
-  const image = require("@/assets/images/auth-bg.png");
+const image = require("@/assets/images/design.png");
   
   export default function ForgotPassword() {
     const { signIn } = useSession();

@@ -204,6 +204,38 @@ export default function Signup() {
             </Text>
           )}
 
+    <Controller
+          control={control}
+          name="email"
+          rules={{
+            required: "Email is required",
+            pattern: { value: /^\S+@\S+$/i, message: "Invalid email format" },
+          }}
+          render={({ field: { onChange, value, onBlur } }) => (
+            <TextInput
+              style={[
+                styles.input,
+                errors.email && styles.inputError,
+                focusedInput && styles.inputFocused,
+              ]}
+              placeholder="Email"
+              className="focus:outline-none focus:border-gray-900"
+              value={value}
+              keyboardType="email-address"
+              autoCorrect={false}
+              onBlur={onBlur}
+              onFocus={() => setFocusedInput("email")}
+              onChangeText={(text) => {
+                onChange(text);
+                trigger("email");
+              }}
+            />
+          )}
+        />
+        {errors.email && (
+          <Text style={styles.errorText}>{errors.email.message}</Text>
+        )}
+
           <Controller
             control={control}
             name="role"

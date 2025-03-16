@@ -21,7 +21,6 @@ const CustomDrawerContent = (props) => {
   const [userData, setUserData] = useState<UserData>({});
   const pathname = usePathname();
   const [error, setError] = useState(false);
-  const { signOut } = useSession();
 
   const getAllOpportunities = async () => {
     try {
@@ -41,6 +40,11 @@ const CustomDrawerContent = (props) => {
     if (!text) return "";
     return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
   };
+
+  function signOut() {
+   localStorage.clear();  
+   router.navigate('/sign-in')
+  }
   useEffect(() => {
     getAllOpportunities();
   }, []);
@@ -209,6 +213,7 @@ export default function Layout() {
           title: "Active Orders",
         }}
       />
+    
           <Drawer.Screen
         name="past-orders"
         options={{

@@ -18,6 +18,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import * as ImagePicker from "react-native-image-picker";
 import axios from "axios";
+import { Picker } from "@react-native-picker/picker";
 
 const API_BASE_URL = "http://localhost:3000";
 
@@ -148,6 +149,8 @@ export default function AddProduct() {
           text2: "Product added successfully!",
         });
       }
+      router.push('/supplier-products');
+      window.location.reload();
     } catch (error) {
       setLoading(false);
       Toast.show({
@@ -164,30 +167,28 @@ export default function AddProduct() {
         <Text style={styles.headerText}>Add Product</Text>
 
         <Controller
-          control={control}
-          name="category"
-          rules={{
-            required: "Category is required",
-          }}
-          render={({ field: { onChange, value, onBlur } }) => (
-            <TextInput
-              style={[
-                styles.input,
-                errors.category && styles.inputError,
-                focusedInput === "category" ? styles.inputFocused : null,
-              ]}
-              placeholder="Category"
-              className="focus:outline-none focus:border-gray-900"
-              value={value}
-              onFocus={() => setFocusedInput("category")}
-              onBlur={() => setFocusedInput(null)}
-              onChangeText={(text) => {
-                onChange(text);
-                trigger("category");
-              }}
-            />
-          )}
-        />
+  control={control}
+  name="category"
+  rules={{ required: "Category is required" }}
+  render={({ field: { onChange, value } }) => (
+    <View>
+      <Picker
+        selectedValue={value}
+        onValueChange={(itemValue) => {
+          onChange(itemValue);
+          trigger("category");
+        }}
+        style={[styles.input, errors.category && styles.inputError]}
+      >
+        <Picker.Item label="Select Category" value="" />
+        <Picker.Item label="T-Shirt" value="tshirt" />
+        <Picker.Item label="Hoodies" value="hoodies" />
+        <Picker.Item label="Jacket" value="jacket" />
+      </Picker>
+      {errors.category && <Text style={styles.errorText}>{errors.category.message}</Text>}
+    </View>
+  )}
+/>
         {errors.category && (
           <Text style={styles.errorText}>{errors.category.message}</Text>
         )}

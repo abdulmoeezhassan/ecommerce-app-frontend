@@ -29,9 +29,9 @@ export default function AdminTabsLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="all-orders"
         options={{
-          title: "Home",
+          title: "All Orders",
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="house.fill" color={color} />
           ),

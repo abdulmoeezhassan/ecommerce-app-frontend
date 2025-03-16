@@ -172,7 +172,7 @@ export default function TabTwoScreen() {
         </ThemedView>
       )}
 
-      {!loading && !error && products.length === 0 && (
+      {products.length === 0 && (
         <ThemedView style={styles.centeredContent}>
           <AntDesign name="inbox" size={48} color="#888" />
           <ThemedText style={styles.emptyText}>No products found</ThemedText>
@@ -182,7 +182,7 @@ export default function TabTwoScreen() {
         </ThemedView>
       )}
 
-      {!loading && !error && products.length > 0 && (
+      {products.length > 0 && (
         <FlatList 
           data={products}
           renderItem={renderProductCard}

@@ -170,7 +170,7 @@ export default function ProfileScreen() {
       formData.append('image', blob, fileToUpload.name);
 
       const response = await fetch(
-        `${API_BASE_URL}/users/update-image/${userId}`,
+        `${API_BASE_URL}users/update-image/${userId}`,
         {
           method: 'PUT',
           headers: {
@@ -219,11 +219,6 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
-
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Account</Text>
-      </View>
 
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {/* Profile Image */}

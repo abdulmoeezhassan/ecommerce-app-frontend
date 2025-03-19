@@ -19,19 +19,20 @@ interface UserData {
 
 const CustomDrawerContent = (props) => {
   const [userData, setUserData] = useState<UserData>({});
+  const [userId, setUserId] = useState<string | null>(null);
   const pathname = usePathname();
   const [error, setError] = useState(false);
 
   const getAllOpportunities = async () => {
     try {
-      const userId = await AsyncStorage.getItem("user_id");
+      const storedUserId = await AsyncStorage.getItem("user_id");
+      setUserId(storedUserId);
       if (!userId) {
         throw new Error("User id not found!");
       }
 
       const response = await axios.get(`${API_BASE_URL}users/get-single-user/${userId}`);
       setUserData(response.data?.data || []);
-
     } catch (error) {
       console.error("Failed to fetch templates:", error);
     }
@@ -59,7 +60,7 @@ const CustomDrawerContent = (props) => {
   >
     <View style={[styles.userInfoWrapper, { backgroundColor: "white" }]}>
       <View style={styles.userDetailsWrapper}>
-        {userData ? (
+        {userData && userId && userData.email && userData.firstName && userData.lastName ? (
           <View style={styles.userRow}>
             <View className="flex flex-row items-center">
               <Image
@@ -89,8 +90,7 @@ const CustomDrawerContent = (props) => {
           </View>
         ) : (
           <View>
-            <Text style={styles.userName}>John Doe</Text>
-            <Text style={styles.userEmail}>john@email.com</Text>
+            {/* <Text style={styles.userName}>Guest</Text> */}
           </View>
         )}
       </View>
@@ -255,6 +255,12 @@ export default function Layout() {
           headerLeft: () => <BackButton />,
         }}
       />
+         {/* <Drawer.Screen
+        name="welcome1"
+      />
+        <Drawer.Screen
+        name="welcome2"
+        /> */}
     </Drawer>
   );
   

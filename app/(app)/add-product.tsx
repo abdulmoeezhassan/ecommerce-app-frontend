@@ -298,7 +298,7 @@ export default function AddProduct() {
                 errors.quality && styles.inputError,
                 focusedInput === "quality" ? styles.inputFocused : null,
               ]}
-              placeholder="Qualities (comma separated, e.g. Premium, Standard)"
+              placeholder="Qualities (comma separated, e.g. 100, 200, 300)"
               className="focus:outline-none focus:border-gray-900 mt-2"
               value={value}
               onFocus={() => setFocusedInput("quality")}

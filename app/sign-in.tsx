@@ -16,7 +16,7 @@ import Toast from "react-native-toast-message";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Ionicons from "react-native-vector-icons/Ionicons";
 
-const image = require("@/assets/images/design.png");
+const image = require("@/assets/images/sign-in.jpg");
 
 export default function SignIn() {
   const { signIn } = useSession();
@@ -79,7 +79,7 @@ export default function SignIn() {
       } else if (responseData?.user?.role === "Admin") {
         router.replace("/all-orders" as any);
       } else {
-        router.push("/home-page" as any);
+        router.replace("/products-listing" as any);
       }
 
       Toast.show({

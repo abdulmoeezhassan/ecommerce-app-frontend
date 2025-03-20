@@ -14,7 +14,7 @@ import { useLocalSearchParams, useNavigation } from "expo-router";
 import userService from "@/services/user-service/user-service";
 import Toast from "react-native-toast-message";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-const image = require("@/assets/images/design.png");
+const image = require("@/assets/images/sign-in.jpg");
 
 export default function Otp() {
   const numberOfOtpFields = 4;

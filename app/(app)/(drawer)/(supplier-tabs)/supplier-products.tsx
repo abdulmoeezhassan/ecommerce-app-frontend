@@ -58,88 +58,125 @@ export default function TabTwoScreen() {
     router.push('/add-product');
   };
 
-  const renderProductCard = ({ item }) => (
-    <TouchableOpacity 
-      style={styles.productCard}
-    >
-      <ThemedView style={styles.cardContent}>
-        <Image
-          source={
-            imageErrors[item._id] || !item.image
-              ? require("@/assets/images/product-placeholder.jpeg")
-              : { uri: `${API_BASE_URL}/${item.image}` }
-          }
-          style={styles.productImage}
-          onError={() => {
-            console.log(`Failed to load image: ${API_BASE_URL}/${item.image}`);
-            setImageErrors(prev => ({...prev, [item._id]: true}));
-          }}
-        />
-        
-        <ThemedView style={styles.categoryBadge}>
-          <ThemedText style={styles.categoryText}>{item.category}</ThemedText>
-        </ThemedView>
-        
-        <ThemedView style={styles.productInfo}>
-          <View className='flex flex-row justify-between w-full'>
-          <ThemedText style={styles.productName}>{item.name}</ThemedText>
-          <ThemedText style={styles.productPrice}>${item.price.toFixed(2)}</ThemedText>
+  // Parse JSON strings into arrays if needed
+  const parseArrayField = (field) => {
+    if (!field) return [];
+    
+    // If already an array
+    if (Array.isArray(field)) {
+      // Handle case where array contains JSON strings
+      if (field.length > 0 && typeof field[0] === 'string' && field[0].startsWith('[')) {
+        try {
+          return JSON.parse(field[0]);
+        } catch (e) {
+          return field;
+        }
+      }
+      return field;
+    }
+    
+    // If it's a string that looks like JSON
+    if (typeof field === 'string') {
+      if (field.startsWith('[')) {
+        try {
+          return JSON.parse(field);
+        } catch (e) {
+          return [field];
+        }
+      }
+      return [field];
+    }
+    
+    return [];
+  };
+
+  const renderProductCard = ({ item }) => {
+    // Parse array fields
+    const colors = parseArrayField(item.color);
+    const sizes = parseArrayField(item.size);
+    const qualities = parseArrayField(item.quality);
+    
+    return (
+      <TouchableOpacity 
+        style={styles.productCard}
+      >
+        <View style={styles.cardContent}>
+          <Image
+            source={
+              imageErrors[item._id] || !item.image
+                ? require("@/assets/images/product-placeholder.jpeg")
+                : { uri: `${API_BASE_URL}/${item.image}` }
+            }
+            style={styles.productImage}
+            resizeMode="cover"
+            onError={() => {
+              console.log(`Failed to load image: ${API_BASE_URL}/${item.image}`);
+              setImageErrors(prev => ({...prev, [item._id]: true}));
+            }}
+          />
+          
+          <View style={styles.categoryBadge}>
+            <ThemedText style={styles.categoryText}>{item.category}</ThemedText>
           </View>
           
-          {item.color && item.color.length > 0 && (
-            <ThemedView style={styles.attributeRow}>
-              <ThemedText style={styles.attributeLabel}>Colors:</ThemedText>
-              <ThemedView style={styles.colorContainer}>
-                {item.color.map((colorName, index) => (
-                  <ThemedView 
-                    key={index} 
-                    style={[
-                      styles.colorDot,
-                      { backgroundColor: getColorHex(colorName) }
-                    ]}
-                  />
-                ))}
-              </ThemedView>
-            </ThemedView>
-          )}
-          
-          {item.size && (
-  <ThemedView style={styles.attributeRow}>
-    <ThemedText style={styles.attributeLabel}>Sizes:</ThemedText>
-    <ThemedView style={styles.chipContainer}>
-      {Array.isArray(item.size) ? 
-        item.size.map((size, index) => (
-          <ThemedView key={index} style={styles.chip}>
-            <ThemedText style={styles.chipText}>{size.replace(/[\[\]"']/g, '')}</ThemedText>
-          </ThemedView>
-        ))
-        :
-        <ThemedView style={styles.chip}>
-          <ThemedText style={styles.chipText}>{item.size.replace(/[\[\]"']/g, '')}</ThemedText>
-        </ThemedView>
-      }
-    </ThemedView>
-  </ThemedView>
-)}
-          
-          {item.quality && (
-  <ThemedView style={styles.attributeRow}>
-    <ThemedText style={styles.attributeLabel}>Quality:</ThemedText>
-    <ThemedText style={styles.qualityText}>
-      {Array.isArray(item.quality) ? 
-        item.quality.join(', ').replace(/[\[\]"']/g, '') 
-        : 
-        item.quality.replace(/[\[\]"']/g, '')}
-    </ThemedText>
-  </ThemedView>
-)}
-        </ThemedView>
-      </ThemedView>
-    </TouchableOpacity>
-  );
+          <View style={styles.productInfo}>
+            <View style={styles.productHeader}>
+              <ThemedText style={styles.productName}>{item.name}</ThemedText>
+              <ThemedText style={styles.productPrice}>PKR {item.price.toFixed(2)}</ThemedText>
+            </View>
+            
+            {colors && colors.length > 0 && (
+              <View style={styles.attributeRow}>
+                <ThemedText style={styles.attributeLabel}>Colors:</ThemedText>
+                <View style={styles.colorContainer}>
+                  {colors.map((colorName, index) => (
+                    <View 
+                      key={index} 
+                      style={[
+                        styles.colorDot,
+                        { backgroundColor: getColorHex(colorName) }
+                      ]}
+                    />
+                  ))}
+                </View>
+              </View>
+            )}
+            
+            {sizes && sizes.length > 0 && (
+              <View style={styles.attributeRow}>
+                <ThemedText style={styles.attributeLabel}>Sizes:</ThemedText>
+                <View style={styles.chipContainer}>
+                  {sizes.map((size, index) => (
+                    <View key={index} style={styles.chip}>
+                      <ThemedText style={styles.chipText}>
+                        {typeof size === 'string' ? size.replace(/[\[\]"']/g, '') : size}
+                      </ThemedText>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+            
+            {qualities && qualities.length > 0 && (
+              <View style={styles.attributeRow}>
+                <ThemedText style={styles.attributeLabel}>Quality:</ThemedText>
+                <ThemedText style={styles.qualityText}>
+                  {qualities.map(q => 
+                    typeof q === 'string' ? q.replace(/[\[\]"']/g, '') : q
+                  ).join(', ')}
+                </ThemedText>
+              </View>
+            )}
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
   
   // Helper function to convert color names to hex codes
   const getColorHex = (colorName) => {
+    if (!colorName || typeof colorName !== 'string') return '#888888';
+    
     const colorMap = {
       red: '#ff5252',
       blue: '#536dfe',
@@ -171,30 +208,24 @@ export default function TabTwoScreen() {
         </TouchableOpacity>
       </View>
 
-      {loading && (
-        <ThemedView style={styles.centeredContent}>
+      {loading ? (
+        <View style={styles.centeredContent}>
           <ThemedText>Loading products...</ThemedText>
-        </ThemedView>
-      )}
-
-      {error && (
-        <ThemedView style={styles.centeredContent}>
+        </View>
+      ) : error ? (
+        <View style={styles.centeredContent}>
           <AntDesign name="exclamationcircle" size={24} color="red" />
           <ThemedText style={styles.errorText}>{error}</ThemedText>
-        </ThemedView>
-      )}
-
-      {products.length === 0 && (
-        <ThemedView style={styles.centeredContent}>
+        </View>
+      ) : products.length === 0 ? (
+        <View style={styles.centeredContent}>
           <AntDesign name="inbox" size={48} color="#888" />
           <ThemedText style={styles.emptyText}>No products found</ThemedText>
           <ThemedText style={styles.emptySubText}>
             Tap the button above to add your first product
           </ThemedText>
-        </ThemedView>
-      )}
-
-      {products.length > 0 && (
+        </View>
+      ) : (
         <FlatList 
           data={products}
           renderItem={renderProductCard}
@@ -211,28 +242,31 @@ export default function TabTwoScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: 'black'
+    color: '#000000'
   },
   addButton: {
-    backgroundColor: '#000',
+    backgroundColor: '#000000',
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 6,
+    padding: 8,
     borderRadius: 8,
   },
   buttonText: {
-    color: '#fff',
+    color: '#FFFFFF',
     marginLeft: 8,
     fontWeight: '500',
   },
@@ -241,7 +275,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: 'white'
+    backgroundColor: '#FFFFFF'
   },
   errorText: {
     color: 'red',
@@ -251,23 +285,24 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#666',
+    color: '#666666',
     marginTop: 16,
   },
   emptySubText: {
     fontSize: 14,
-    color: '#666',
+    color: '#666666',
     marginTop: 8,
     textAlign: 'center',
   },
   productList: {
     padding: 12,
+    backgroundColor: '#FFFFFF',
   },
   productCard: {
     marginBottom: 16,
     borderRadius: 12,
-    backgroundColor: '#fff',
-    shadowColor: '#000',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -276,10 +311,12 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     position: 'relative',
+    backgroundColor: '#FFFFFF',
   },
   productImage: {
     width: '100%',
     height: 180,
+    backgroundColor: '#f9f9f9',
   },
   categoryBadge: {
     position: 'absolute',
@@ -291,23 +328,32 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   categoryText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: 12,
     fontWeight: 'bold',
   },
   productInfo: {
     padding: 16,
+    backgroundColor: '#FFFFFF',
+  },
+  productHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+    width: '100%',
   },
   productName: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 6,
+    color: '#000000',
+    flex: 1,
+    marginRight: 8,
   },
   productPrice: {
     fontSize: 18,
     fontWeight: '600',
     color: '#4a4a4a',
-    marginBottom: 12,
   },
   attributeRow: {
     flexDirection: 'row',
@@ -319,21 +365,25 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginRight: 8,
     width: 60,
+    color: '#555555',
   },
   colorContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
   },
   colorDot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     marginRight: 6,
+    marginBottom: 4,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#dddddd',
   },
   chipContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    flex: 1,
   },
   chip: {
     backgroundColor: '#f0f0f0',
@@ -345,9 +395,11 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: 12,
+    color: '#333333',
   },
   qualityText: {
     fontSize: 14,
-    color: '#555',
+    color: '#555555',
+    flex: 1,
   },
 });

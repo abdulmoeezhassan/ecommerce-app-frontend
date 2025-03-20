@@ -5,9 +5,9 @@ import { useRouter } from 'expo-router';
 const HomeScreen = () => {
   const router = useRouter();
   const categories = [
-    { name: 'T-shirt', image: require('@/assets/images/t-shirts.jpg') },
-    { name: 'Hoodies', image: require('@/assets/images/hoodie.png') },
-    { name: 'Jacket', image: require('@/assets/images/jackets.jpg') },
+    { name: 'tshirt', image: require('@/assets/images/t-shirts.jpg') },
+    { name: 'hoodies', image: require('@/assets/images/hoodie.png') },
+    { name: 'jacket', image: require('@/assets/images/jackets.jpg') },
   ];
   const headerImage = require("@/assets/images/headerpic.png");
   const [selectedCategory, setSelectedCategory] = useState('All');

@@ -220,6 +220,11 @@ export default function ProfileScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>My Account</Text>
+      </View>
+
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {/* Profile Image */}
         <View style={styles.imageContainer}>

@@ -7,12 +7,12 @@ const SettingsMenu = () => {
   return (
     <View style={styles.container}>
       {/* Logout Option */}
-      <TouchableOpacity style={styles.menuItem}>
+      {/* <TouchableOpacity style={styles.menuItem}>
         <View style={styles.iconContainer}>
           <Ionicons name="log-out-outline" size={22} color="black" />
         </View>
         <Text style={styles.menuItemText}>Logout</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       {/* Delete Account Option */}
       {/* <TouchableOpacity style={styles.menuItem}>

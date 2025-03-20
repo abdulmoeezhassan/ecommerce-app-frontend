@@ -10,7 +10,9 @@ import {
   StatusBar,
   Dimensions,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
+  TextInput,
+  Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -18,6 +20,7 @@ import { useCart } from '../../components/cartcontext';
 import NavigationHeader from './navigation-header';
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
+import * as ImagePicker from 'react-native-image-picker';
 
 const { width } = Dimensions.get('window');
 const IMAGE_BASE_URL = 'https://ecommerce-app-backend-indol.vercel.app'; // Base URL for images
@@ -43,6 +46,10 @@ const ProductDetail = () => {
   const [showQualityOptions, setShowQualityOptions] = useState(false);
   const [addingToCart, setAddingToCart] = useState(false);
   const [hasSupplierConflict, setHasSupplierConflict] = useState(false);
+  
+  // New state for custom design
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [customDescription, setCustomDescription] = useState('');
   
   // Fetch product details when component mounts
   useEffect(() => {
@@ -188,6 +195,29 @@ const ProductDetail = () => {
     
     return `${baseUrlWithoutTrailingSlash}/${pathWithoutLeadingSlash}`;
   };
+  
+  // Image upload functionality
+  const uploadImage = () => {
+    ImagePicker.launchImageLibrary(
+      {
+        mediaType: 'photo',
+        quality: 1,
+        selectionLimit: 1,
+      },
+      (response) => {
+        if (!response.didCancel && response.assets && response.assets.length > 0) {
+          setSelectedImage(response.assets[0]);
+          console.log("Image selected:", response.assets[0]);
+          
+          Toast.show({
+            type: 'success',
+            text1: 'Image Selected',
+            text2: 'Custom design image added successfully',
+          });
+        }
+      }
+    );
+  };
 
   // Handle Add to Cart
   const handleAddToCart = async () => {
@@ -206,22 +236,54 @@ const ProductDetail = () => {
       return;
     }
 
-    // Create cart product object with supplierId
-    const cartProduct = {
-      id: product._id,
-      name: product.name,
-      price: product.price,
-      color: selectedColor,
-      size: selectedSize,
-      quality: selectedQuality,
-      quantity: quantity,
-      image: product.image,
-      supplierId: product.supplierId // Include supplierId
-    };
-
     setAddingToCart(true);
+    
     try {
-      // The addToCart function now returns a boolean success value
+      // Process the image if available
+      let customDesignPath = null;
+      
+      if (selectedImage) {
+        // Create a file object for the image
+        const fileToUpload = {
+          uri: selectedImage.uri,
+          name: selectedImage.fileName || 'image.jpg',
+          type: selectedImage.type || 'image/jpeg'
+        };
+        
+        try {
+          // This will prepare the image but not actually upload it yet
+          // The blob data will be included in the customDesignPath
+          const blob = await (await fetch(fileToUpload.uri)).blob();
+          customDesignPath = selectedImage.uri;
+          console.log("Image prepared for cart:", fileToUpload);
+        } catch (imageError) {
+          console.error("Error preparing image:", imageError);
+          Toast.show({
+            type: 'error',
+            text1: 'Image Processing Error',
+            text2: 'Could not process the uploaded image'
+          });
+          customDesignPath = null;
+        }
+      }
+
+      // Create cart product object with supplierId and custom design details
+      const cartProduct = {
+        id: product._id,
+        name: product.name,
+        price: product.price,
+        color: selectedColor,
+        size: selectedSize,
+        quality: selectedQuality,
+        quantity: quantity,
+        image: product.image,
+        supplierId: product.supplierId,
+        customDesignPath: customDesignPath,
+        description: customDescription || '',
+        dateAdded: new Date().toISOString()
+      };
+
+      // Add the product to cart
       const success = await addToCart(cartProduct);
       
       if (success) {
@@ -229,9 +291,19 @@ const ProductDetail = () => {
           type: 'success',
           text1: 'Product Added to Cart',
           text2: `${quantity} x ${product.name}`,
-        })
+        });
+        
+        // Clear custom design fields after successful add
+        setSelectedImage(null);
+        setCustomDescription('');
       }
-      // If not successful, the cart context already showed an error message
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to add product to cart'
+      });
     } finally {
       setAddingToCart(false);
     }
@@ -405,6 +477,47 @@ const ProductDetail = () => {
               </View>
             </View>
           )}
+          
+          {/* Custom Design Section */}
+          <View style={styles.customDesignSection}>
+            <Text style={styles.sectionTitle}>Customize Your Order</Text>
+            
+            {/* Image Preview - Only show if an image is selected */}
+            {selectedImage && (
+              <View style={styles.imagePreviewContainer}>
+                <Image
+                  source={{ uri: selectedImage.uri }}
+                  style={styles.uploadedImage}
+                />
+                <TouchableOpacity 
+                  style={styles.removeImageButton}
+                  onPress={() => setSelectedImage(null)}
+                >
+                  <Ionicons name="close-circle" size={24} color="#ff4d4d" />
+                </TouchableOpacity>
+              </View>
+            )}
+            
+            {/* Upload Button */}
+            <TouchableOpacity 
+              style={styles.uploadButton} 
+              onPress={uploadImage}
+            >
+              <Ionicons name="cloud-upload-outline" size={24} color="white" />
+              <Text style={styles.uploadButtonText}>Upload Design</Text>
+            </TouchableOpacity>
+            
+            {/* Description Input */}
+            <TextInput
+              style={styles.descriptionInput}
+              placeholder="Add any special instructions or design requirements..."
+              placeholderTextColor="#999999"
+              multiline={true}
+              numberOfLines={4}
+              value={customDescription}
+              onChangeText={setCustomDescription}
+            />
+          </View>
 
           {/* Add to Cart Button */}
           <TouchableOpacity 
@@ -446,7 +559,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#666',
+    color: '#666666',
     textAlign: 'center',
   },
   errorContainer: {
@@ -458,7 +571,7 @@ const styles = StyleSheet.create({
   errorText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#666',
+    color: '#666666',
     textAlign: 'center',
   },
   retryButton: {
@@ -491,10 +604,11 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '600',
     marginBottom: 4,
+    color: '#000000',
   },
   productCategory: {
     fontSize: 14,
-    color: '#888',
+    color: '#888888',
     marginBottom: 8,
   },
   productPrice: {
@@ -531,7 +645,7 @@ const styles = StyleSheet.create({
   optionLabel: {
     fontSize: 16,
     fontWeight: '400',
-    color: '#666',
+    color: '#666666',
     width: '40%',
   },
   colorOptions: {
@@ -547,7 +661,7 @@ const styles = StyleSheet.create({
   },
   selectedColorBorder: {
     borderWidth: 2,
-    borderColor: '#ddd',
+    borderColor: '#dddddd',
   },
   qualitySelectorContainer: {
     position: 'relative',
@@ -566,7 +680,7 @@ const styles = StyleSheet.create({
   },
   qualityValue: {
     fontSize: 16,
-    color: '#333',
+    color: '#333333',
     marginRight: 8,
   },
   qualityDropdown: {
@@ -574,13 +688,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f8f8',
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: '#eee',
+    borderColor: '#eeeeee',
     position: 'absolute',
     bottom: '100%',
     right: 0,
     zIndex: 1000,
     width: 150,
-    shadowColor: '#000',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -590,13 +704,14 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#eeeeee',
   },
   selectedQualityOption: {
     backgroundColor: '#f0f0f0',
   },
   qualityOptionText: {
     fontSize: 14,
+    color: '#333333',
   },
   sizeOptions: {
     flexDirection: 'row',
@@ -609,7 +724,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     backgroundColor: 'white',
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#dddddd',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -620,7 +735,7 @@ const styles = StyleSheet.create({
   },
   sizeText: {
     fontSize: 14,
-    color: '#333',
+    color: '#333333',
   },
   selectedSizeText: {
     color: 'white',
@@ -632,11 +747,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 14,
     borderRadius: 50,
-    marginTop: 12,
-    marginBottom:30,
+    marginTop: 24,
+    marginBottom: 30,
   },
   disabledButton: {
-    backgroundColor: '#aaa',
+    backgroundColor: '#aaaaaa',
   },
   addToCartText: {
     color: 'white',
@@ -676,6 +791,71 @@ const styles = StyleSheet.create({
   quantityButtonText: {
     fontSize: 16,
     fontWeight: '500',
+  },
+  // Custom Design Section Styles
+  customDesignSection: {
+    marginTop: 20,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 16,
+    color: '#000000',
+  },
+  imagePreviewContainer: {
+    position: 'relative',
+    width: '100%',
+    height: 200,
+    marginBottom: 16,
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: '#f5f5f5',
+  },
+  uploadedImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    borderRadius: 20,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  uploadButton: {
+    backgroundColor: '#1e88e5',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  uploadButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '500',
+    marginLeft: 8,
+  },
+  descriptionInput: {
+    borderWidth: 1,
+    borderColor: '#dddddd',
+    borderRadius: 8,
+    padding: 12,
+    height: 100,
+    textAlignVertical: 'top',
+    fontSize: 16,
+    color: '#333333',
+    backgroundColor: '#ffffff',
   },
 });
 

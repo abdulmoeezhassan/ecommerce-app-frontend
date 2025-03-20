@@ -124,6 +124,7 @@ export default function AddProduct() {
         
         const blob = await (await fetch(fileToUpload.uri)).blob();
         formData.append('image', blob, fileToUpload.name);
+        console.log("Image uploaded:", fileToUpload);
         
       }
       

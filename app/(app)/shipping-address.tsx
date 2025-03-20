@@ -8,7 +8,8 @@ import {
   TouchableOpacity, 
   ActivityIndicator, 
   StatusBar,
-  ScrollView
+  ScrollView,
+  Alert
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import axios from 'axios';
@@ -17,7 +18,7 @@ import { useCart } from '../../components/cartcontext';
 import NavigationHeader from './navigation-header';
 import Toast from 'react-native-toast-message';
 
-const API_BASE_URL = 'https://ecommerce-app-backend-indol.vercel.app/api'; 
+const API_BASE_URL = 'https://ecommerce-app-backend-indol.vercel.app/api';
 
 const ShippingForm = () => {
   const router = useRouter();
@@ -39,6 +40,7 @@ const ShippingForm = () => {
     city: '',
     country: 'Pakistan' // Default country
   });
+  const [hasCustomDesigns, setHasCustomDesigns] = useState(false);
 
   // Fetch user information when component mounts
   useEffect(() => {
@@ -82,6 +84,14 @@ const ShippingForm = () => {
           console.error('Error fetching user data:', userError);
           // Continue with empty form if no user data found
         }
+
+        // Check if any cart items have custom designs
+        const hasDesigns = cart.some(item => 
+          item.customDesignPath !== null && 
+          item.customDesignPath !== undefined && 
+          item.customDesignPath !== ''
+        );
+        setHasCustomDesigns(hasDesigns);
       } catch (error) {
         console.error('Error initializing:', error);
       } finally {
@@ -151,6 +161,32 @@ const ShippingForm = () => {
     return true;
   };
 
+  // Process images for cart products
+  const processCartProducts = async () => {
+    const processedProducts = [];
+    
+    for (const item of cart) {
+      const productData = {
+        productId: item.id,
+        quantity: item.quantity,
+        color: item.color || null,
+        size: item.size || null,
+        quality: item.quality || null,
+        price: item.price
+      };
+      
+      // Add custom design data if present
+      if (item.customDesignPath) {
+        productData.customDesignPath = item.customDesignPath;
+        productData.designDescription = item.description || '';
+      }
+      
+      processedProducts.push(productData);
+    }
+    
+    return processedProducts;
+  };
+
   // Submit order and shipping details
   const handleCompleteOrder = async () => {
     // Validate form
@@ -180,15 +216,8 @@ const ShippingForm = () => {
     
     setSubmitting(true);
     try {
-      // Format products array for the cart with all selected details
-      const products = cart.map(item => ({
-        productId: item.id,
-        quantity: item.quantity,
-        color: item.color || null,
-        size: item.size || null,
-        quality: item.quality || null,
-        price: item.price
-      }));
+      // Process cart products with custom designs
+      const products = await processCartProducts();
       
       // Create cart with the updated schema format
       const cartData = {
@@ -198,12 +227,16 @@ const ShippingForm = () => {
         totalAmount: cartTotal
       };
       
+      console.log('Sending cart data:', JSON.stringify(cartData));
+      
       // Create cart in database
       const cartResponse = await axios.post(`${API_BASE_URL}/cart/save`, cartData);
       
       if (!cartResponse.data || !cartResponse.data.cart || !cartResponse.data.cart._id) {
         throw new Error('Failed to create cart');
       }
+      
+      console.log('Cart created successfully:', cartResponse.data);
       
       const cartId = cartResponse.data.cart._id;
       
@@ -240,7 +273,6 @@ const ShippingForm = () => {
         // Clear the cart
         await clearCart();
         
-       
         Toast.show({
           type: 'success',
           text1: 'Order Placed Successfully',
@@ -375,6 +407,13 @@ const ShippingForm = () => {
             <Text style={styles.summaryText}>Total Amount:</Text>
             <Text style={styles.summaryValue}>PKR {cartTotal}</Text>
           </View>
+          {hasCustomDesigns && (
+            <View style={styles.customDesignInfo}>
+              <Text style={styles.customDesignText}>
+                Your order includes items with custom designs. These will be processed with your order.
+              </Text>
+            </View>
+          )}
         </View>
         
         <TouchableOpacity 
@@ -461,6 +500,18 @@ const styles = StyleSheet.create({
   summaryValue: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  customDesignInfo: {
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: '#fff3e0',
+    borderRadius: 4,
+    borderLeftWidth: 3,
+    borderLeftColor: '#ff9800',
+  },
+  customDesignText: {
+    color: '#e65100',
+    fontSize: 14,
   },
   continueButton: {
     backgroundColor: '#000',

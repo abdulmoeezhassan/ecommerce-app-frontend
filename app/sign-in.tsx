@@ -49,7 +49,7 @@ export default function SignIn() {
     try {
       setLoading(true);
       const response = await userService.Login(data);
-
+      
       if (!response.ok) {
         setLoading(false);
         const errorData = await response.json();
@@ -60,7 +60,7 @@ export default function SignIn() {
         });
         throw new Error(errorData?.message || "Error during login");
       }
-
+      
       const responseData = await response.json();
       console.log("Login successful:", responseData);
       await AsyncStorage.setItem("email", responseData?.user?.email);
@@ -70,18 +70,21 @@ export default function SignIn() {
       );
       await AsyncStorage.setItem("user_id", responseData?.user?._id);
       await AsyncStorage.setItem("role", responseData?.user?.role);
-
+      
       signIn();
       setLoading(false);
-
-      if (responseData?.user?.role === "Seller") {
+      
+      // Check if user is a Supplier with unverified account
+      if (responseData?.user?.role === "Seller" && responseData?.user?.isAccountActive === false) {
+        router.replace("/pending-account" as any);
+      } else if (responseData?.user?.role === "Seller") {
         router.push("/active-orders" as any);
       } else if (responseData?.user?.role === "Admin") {
         router.replace("/all-orders" as any);
       } else {
         router.replace("/products-listing" as any);
       }
-
+      
       Toast.show({
         type: "success",
         text1: "Login Successful",

@@ -1,15 +1,13 @@
 import { useState, useEffect } from "react";
-import { View, Text, FlatList, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
-import { router } from "expo-router";
-import userService from "@/services/user-service/user-service";
 import Icon from "react-native-vector-icons/FontAwesome";
 import axios from "axios";
-
+import Toast from "react-native-toast-message";
 
 const API_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app";
-
+// const API_BASE_URL = "http://localhost:3000"
 const Suppliers = () => {
   const [userData, setUserData] = useState([]);
   const navigation = useNavigation();
@@ -24,7 +22,6 @@ const Suppliers = () => {
       const response = await axios.get(`${API_BASE_URL}/api/users/get-all-suppliers`);
       console.log(response);
       setUserData(response.data?.data || []);
-
     } catch (error) {
       console.error("Failed to fetch templates:", error);
     }
@@ -36,6 +33,64 @@ const Suppliers = () => {
 
   const handleViewDetails = (item) => {
     // router.push({ pathname: "/opportunities-details", params: { id: item._id } });
+  };
+
+  const handleApprove = async (id) => {
+    try {
+      const token = await AsyncStorage.getItem("accessToken");
+      if (!token) {
+        throw new Error("No access token found!");
+      }
+
+      const response = await axios.post(
+        `${API_BASE_URL}/api/users/approve-user/${id}`,
+        { 
+          userId: id,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      
+      if (response.status === 200) {
+        Toast.show({
+          type: "success",
+          text1: "Suplier approved successfully",
+          text2: response?.data?.message || "Error in approving supplier",
+        });  
+        getAllOpportunities(); // Refresh the list
+      }
+    } catch (error) {
+      console.error("Failed to approve supplier:", error);
+      Alert.alert("Error", "Failed to approve supplier");
+    }
+  };
+
+  const handleReject = async (id) => {
+    try {
+      const token = await AsyncStorage.getItem("accessToken");
+      if (!token) {
+        throw new Error("No access token found!");
+      }
+
+      const response = await axios.post(
+        `${API_BASE_URL}/api/users/reject-user/${id}`,
+        {
+          data: { userId: id } // Send id in the request body for DELETE request
+        }
+      );
+      
+      if (response.status === 200) {
+        Toast.show({
+          type: "success",
+          text1: "Suplier rejected successfully",
+          text2: response?.data?.message || "Error in rejecting supplier",
+        });         getAllOpportunities(); // Refresh the list
+      }
+    } catch (error) {
+      console.error("Failed to reject supplier:", error);
+      Alert.alert("Error", "Failed to reject supplier");
+    }
   };
 
   const capitalizeFirstLetter = (text) => {
@@ -55,6 +110,23 @@ const Suppliers = () => {
           <Text style={[styles.email]} className="pt-2">{item.email}</Text>
         </View>
       </View>
+      
+      {item.isAccountActive === false && (
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity 
+            style={styles.approveButton}
+            onPress={() => handleApprove(item._id)}
+          >
+            <Text style={styles.buttonText}>Approve</Text>
+          </TouchableOpacity>
+          {/* <TouchableOpacity 
+            style={styles.rejectButton}
+            onPress={() => handleReject(item._id)}
+          >
+            <Text style={styles.buttonText}>Reject</Text>
+          </TouchableOpacity> */}
+        </View>
+      )}
     </TouchableOpacity>
   );
 
@@ -130,6 +202,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#999",
     marginTop: 100,
+  },
+  buttonContainer: {
+    flexDirection: "row",
+  },
+  approveButton: {
+    backgroundColor: "#4CAF50",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 4,
+    marginRight: 8,
+  },
+  rejectButton: {
+    backgroundColor: "#F44336",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 4,
+  },
+  buttonText: {
+    color: "white",
+    fontWeight: "bold",
   },
 });
 

@@ -9,6 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 
 const API_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app/api";
+// const API_BASE_URL = "http://localhost:3000/api"
 
 export default function PastOrders() {
   const [orders, setOrders] = useState([]);
@@ -77,17 +78,17 @@ export default function PastOrders() {
     <TouchableOpacity
       style={styles.orderCard}
     >
-      <ThemedView style={styles.cardContent}>
-        <ThemedView style={styles.orderHeader}>
-          <ThemedView style={styles.statusBadge}>
+      <View style={styles.cardContent}>
+        <View style={styles.orderHeader}>
+          <View style={styles.statusBadge}>
             <ThemedText style={styles.statusText}>{item.orderStatus}</ThemedText>
-          </ThemedView>
+          </View>
           <ThemedText style={styles.orderDate}>
             {new Date(item.createdAt).toLocaleDateString()}
           </ThemedText>
-        </ThemedView>
+        </View>
 
-        <ThemedView style={styles.orderInfo}>
+        <View style={styles.orderInfo}>
           <View style={styles.infoRow}>
             <ThemedText style={styles.infoLabel}>Order ID:</ThemedText>
             <ThemedText style={styles.infoValue}>#{item._id.substring(0, 8)}</ThemedText>
@@ -100,14 +101,14 @@ export default function PastOrders() {
 
           <View style={styles.infoRow}>
             <ThemedText style={styles.infoLabel}>Payment:</ThemedText>
-            <ThemedView style={[styles.paymentBadge,
+            <View style={[styles.paymentBadge,
             item.paymentStatus === "Paid" ? styles.paidBadge : styles.pendingBadge]}>
               <ThemedText style={styles.paymentText}>{item.paymentStatus}</ThemedText>
-            </ThemedView>
+            </View>
           </View>
 
           {item.userInfo && (
-            <ThemedView style={styles.customerInfo}>
+            <View style={styles.customerInfo}>
               <ThemedText style={styles.sectionTitle}>Customer Information</ThemedText>
               <View style={styles.infoRow}>
                 <ThemedText style={styles.infoLabel}>Email:</ThemedText>
@@ -117,10 +118,10 @@ export default function PastOrders() {
                 <ThemedText style={styles.infoLabel}>Address:</ThemedText>
                 <ThemedText style={styles.infoValue}>{item.userInfo.address}</ThemedText>
               </View>
-            </ThemedView>
+            </View>
           )}
-        </ThemedView>
-      </ThemedView>
+        </View>
+      </View>
     </TouchableOpacity>
   );
 
@@ -131,26 +132,26 @@ export default function PastOrders() {
       </View>
 
       {loading && (
-        <ThemedView style={styles.centeredContent}>
+        <View style={styles.centeredContent}>
           <ThemedText>Loading orders...</ThemedText>
-        </ThemedView>
+        </View>
       )}
 
       {error && (
-        <ThemedView style={styles.centeredContent}>
+        <View style={styles.centeredContent}>
           <AntDesign name="exclamationcircle" size={24} color="red" />
           <ThemedText style={styles.errorText}>{error}</ThemedText>
-        </ThemedView>
+        </View>
       )}
 
       {!loading && !error && orders.length === 0 && (
-        <ThemedView style={styles.centeredContent}>
+        <View style={styles.centeredContent}>
           <AntDesign name="inbox" size={48} color="#888" />
           <ThemedText style={styles.emptyText}>No orders found</ThemedText>
           <ThemedText style={styles.emptySubText}>
             Your orders will appear here once customers place them
           </ThemedText>
-        </ThemedView>
+        </View>
       )}
 
       {!loading && !error && orders.length > 0 && (
@@ -237,7 +238,7 @@ const styles = StyleSheet.create({
   orderCard: {
     marginBottom: 16,
     borderRadius: 12,
-    backgroundColor: '#fff',
+    backgroundColor: 'white', // Explicitly set to white
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -247,12 +248,14 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     padding: 16,
+    backgroundColor: 'white', // Explicitly set to white
   },
   orderHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+    backgroundColor: 'white', // Explicitly set to white
   },
   statusBadge: {
     backgroundColor: '#007bff',
@@ -273,12 +276,14 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#eee',
     paddingTop: 12,
+    backgroundColor: 'white', // Explicitly set to white
   },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
+    backgroundColor: 'white', // Explicitly set to white
   },
   infoLabel: {
     fontSize: 14,
@@ -286,6 +291,7 @@ const styles = StyleSheet.create({
   },
   infoValue: {
     fontSize: 14,
+    color: 'black',
     fontWeight: '500',
   },
   paymentBadge: {
@@ -309,6 +315,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#eee',
     marginTop: 12,
     paddingTop: 12,
+    backgroundColor: 'white', // Explicitly set to white
   },
   sectionTitle: {
     fontSize: 16,

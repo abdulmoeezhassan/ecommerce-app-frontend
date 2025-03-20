@@ -17,7 +17,7 @@ const WelcomeTwo = () => {
               Explore the new world of clothing
             </Text>
             
-            <View className="w-full max-w-xs space-y-4 mt-5">
+            <View className="w-full max-w-xs space-y-8 mt-5">
               <TouchableOpacity 
                 className="bg-white py-3 px-8 rounded-full w-full items-center" 
                 onPress={() => router.replace('/sign-in')}

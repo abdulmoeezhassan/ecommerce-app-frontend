@@ -79,7 +79,7 @@ export default function SignIn() {
       } else if (responseData?.user?.role === "Admin") {
         router.replace("/all-orders" as any);
       } else {
-        router.replace("/" as any);
+        router.push("/home-page" as any);
       }
 
       Toast.show({

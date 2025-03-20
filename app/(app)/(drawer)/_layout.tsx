@@ -43,9 +43,10 @@ const CustomDrawerContent = (props) => {
   };
 
   function signOut() {
-   localStorage.clear();  
-   router.navigate('/sign-in')
+    AsyncStorage.clear();
+    router.push('/sign-in')
   }
+
   useEffect(() => {
     getAllOpportunities();
   }, []);
@@ -55,115 +56,115 @@ const CustomDrawerContent = (props) => {
 
   return (
     <DrawerContentScrollView
-    {...props}
-    contentContainerStyle={{ backgroundColor: "white", flex: 1 }} // Ensure white background
-  >
-    <View style={[styles.userInfoWrapper, { backgroundColor: "white" }]}>
-      <View style={styles.userDetailsWrapper}>
-        {userData && userId && userData.email && userData.firstName && userData.lastName ? (
-          <View style={styles.userRow}>
-            <View className="flex flex-row items-center">
-              <Image
-                source={
-                  error || !userData?.imagePath
-                    ? require("@/assets/images/user-placeholder-img.png")
-                    : { uri: userData?.imagePath }
-                }
-                style={styles.icon}
-                onError={() => setError(true)}
-              />
-              <View style={styles.userTextWrapper}>
-                <Text style={styles.userName}>
-                  {capitalizeFirstLetter(
-                    userData?.firstName + " " + userData?.lastName
-                  )}
-                </Text>
-                <Text style={styles.userEmail}>{userData?.email}</Text>
+      {...props}
+      contentContainerStyle={{ backgroundColor: "white", flex: 1 }} // Ensure white background
+    >
+      <View style={[styles.userInfoWrapper, { backgroundColor: "white" }]}>
+        <View style={styles.userDetailsWrapper}>
+          {userData && userId && userData.email && userData.firstName && userData.lastName ? (
+            <View style={styles.userRow}>
+              <View className="flex flex-row items-center">
+                <Image
+                  source={
+                    error || !userData?.imagePath
+                      ? require("@/assets/images/user-placeholder-img.png")
+                      : { uri: userData?.imagePath }
+                  }
+                  style={styles.icon}
+                  onError={() => setError(true)}
+                />
+                <View style={styles.userTextWrapper}>
+                  <Text style={styles.userName}>
+                    {capitalizeFirstLetter(
+                      userData?.firstName + " " + userData?.lastName
+                    )}
+                  </Text>
+                  <Text style={styles.userEmail}>{userData?.email}</Text>
+                </View>
               </View>
+              <FontAwesome
+                name="pencil"
+                size={18}
+                color="black"
+                onPress={() => router.push("/profile")}
+              />
             </View>
-            <FontAwesome
-              name="pencil"
-              size={18}
-              color="black"
-              onPress={() => router.push("/profile")}
-            />
-          </View>
-        ) : (
-          <View>
-            {/* <Text style={styles.userName}>Guest</Text> */}
-          </View>
-        )}
+          ) : (
+            <View>
+              {/* <Text style={styles.userName}>Guest</Text> */}
+            </View>
+          )}
+        </View>
       </View>
-    </View>
-  
-    <DrawerItem
-      icon={({ size }) => (
-        <AntDesign
-          name="user"
-          size={size}
-          color={pathname === "/profile" ? "#fff" : "#000"}
-        />
-      )}
-      label={"Profile"}
-      labelStyle={[
-        styles.navItemLabel,
-        { color: pathname === "/profile" ? "#fff" : "#000" },
-      ]}
-      style={{
-        backgroundColor: pathname === "/profile" ? "#333" : "white",
-      }}
-      onPress={() => router.push("/profile")}
-    />
-  
-    <DrawerItem
-      icon={({ size }) => (
-        <Ionicons
-          name="settings-outline"
-          size={size}
-          color={pathname === "/settings" ? "#fff" : "#000"}
-        />
-      )}
-      label={"Settings"}
-      labelStyle={[
-        styles.navItemLabel,
-        { color: pathname === "/settings" ? "#fff" : "#000" },
-      ]}
-      style={{
-        backgroundColor: pathname === "/settings" ? "#333" : "white",
-      }}
-      onPress={() => router.push("/settings")}
-    />
-  
-    <DrawerItem
-      icon={({ size }) => (
-        <MaterialIcons
-          name="password"
-          size={size}
-          color={pathname === "/change-password" ? "#fff" : "#000"}
-        />
-      )}
-      label={"Change Password"}
-      labelStyle={[
-        styles.navItemLabel,
-        { color: pathname === "/change-password" ? "#fff" : "#000" },
-      ]}
-      style={{
-        backgroundColor: pathname === "/change-password" ? "#333" : "white",
-      }}
-      onPress={() => router.push("/change-password")}
-    />
-  
-    <DrawerItem
-      icon={({ size }) => (
-        <AntDesign className="rotate-180" name="logout" size={size} />
-      )}
-      label={"Sign Out"}
-      labelStyle={[styles.navItemLabel, { color: "black" }]}
-      style={{ backgroundColor: "white" }} 
-      onPress={signOut}
-    />
-  </DrawerContentScrollView>
-  
+
+      <DrawerItem
+        icon={({ size }) => (
+          <AntDesign
+            name="user"
+            size={size}
+            color={pathname === "/profile" ? "#fff" : "#000"}
+          />
+        )}
+        label={"Profile"}
+        labelStyle={[
+          styles.navItemLabel,
+          { color: pathname === "/profile" ? "#fff" : "#000" },
+        ]}
+        style={{
+          backgroundColor: pathname === "/profile" ? "#333" : "white",
+        }}
+        onPress={() => router.push("/profile")}
+      />
+
+      <DrawerItem
+        icon={({ size }) => (
+          <Ionicons
+            name="settings-outline"
+            size={size}
+            color={pathname === "/settings" ? "#fff" : "#000"}
+          />
+        )}
+        label={"Settings"}
+        labelStyle={[
+          styles.navItemLabel,
+          { color: pathname === "/settings" ? "#fff" : "#000" },
+        ]}
+        style={{
+          backgroundColor: pathname === "/settings" ? "#333" : "white",
+        }}
+        onPress={() => router.push("/settings")}
+      />
+
+      <DrawerItem
+        icon={({ size }) => (
+          <MaterialIcons
+            name="password"
+            size={size}
+            color={pathname === "/change-password" ? "#fff" : "#000"}
+          />
+        )}
+        label={"Change Password"}
+        labelStyle={[
+          styles.navItemLabel,
+          { color: pathname === "/change-password" ? "#fff" : "#000" },
+        ]}
+        style={{
+          backgroundColor: pathname === "/change-password" ? "#333" : "white",
+        }}
+        onPress={() => router.push("/change-password")}
+      />
+
+      <DrawerItem
+        icon={({ size }) => (
+          <AntDesign className="rotate-180" name="logout" size={size} />
+        )}
+        label={"Sign Out"}
+        labelStyle={[styles.navItemLabel, { color: "black" }]}
+        style={{ backgroundColor: "white" }}
+        onPress={signOut}
+      />
+    </DrawerContentScrollView>
+
   );
 };
 
@@ -227,7 +228,7 @@ export default function Layout() {
           headerLeft: () => <BackButton />,
         }}
       />
-        <Drawer.Screen
+      <Drawer.Screen
         name="view-all-orders"
         options={{
           title: "View All Orders",
@@ -255,7 +256,7 @@ export default function Layout() {
           headerLeft: () => <BackButton />,
         }}
       />
-         {/* <Drawer.Screen
+      {/* <Drawer.Screen
         name="welcome1"
       />
         <Drawer.Screen
@@ -263,7 +264,7 @@ export default function Layout() {
         /> */}
     </Drawer>
   );
-  
+
 }
 
 

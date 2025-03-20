@@ -46,8 +46,8 @@ const AccountScreen = () => {
   // };
 
     function signOut() {
-     localStorage.clear();  
-     router.navigate('/sign-in')
+     AsyncStorage.clear();  
+     router.push('/sign-in')
     }
   return (
     <SafeAreaView style={styles.container}>

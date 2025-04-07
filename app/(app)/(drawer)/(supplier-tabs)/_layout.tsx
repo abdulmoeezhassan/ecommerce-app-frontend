@@ -56,7 +56,7 @@ export default function SupplierTabsLayout() {
     }}
   />
 
-  <Tabs.Screen
+  {/* <Tabs.Screen
     name="custom-design"
     options={{
       title: "Custom Design",
@@ -64,7 +64,7 @@ export default function SupplierTabsLayout() {
         <FontAwesome name="paint-brush" size={24} color={color} />
       ),
     }}
-  />
+  /> */}
 </Tabs>
 
   

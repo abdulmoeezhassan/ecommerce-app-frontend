@@ -7,11 +7,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 
 const API_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app/api";
+// const API_BASE_URL = "http://localhost:3000/api"
+
+// const IMAGE_BASE_URL = "http://localhost:3000/";
+const IMAGE_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app/";
 
 export default function TabTwoScreen() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [imageErrors, setImageErrors] = useState({});
 
   const fetchOrders = async () => {
     setLoading(true); // Ensure loading state is set before fetching
@@ -75,6 +80,26 @@ export default function TabTwoScreen() {
     <TouchableOpacity
       style={styles.orderCard}
     >
+            {item.products && item.products.map((product, index) => (
+              <Image
+                source={
+                  imageErrors[item._id] || !product.image
+                    ? require("@/assets/images/product-placeholder.jpeg")
+                    : { uri: `${IMAGE_BASE_URL}${product.image}` }
+                }
+                style={styles.productImage}
+                resizeMode="contain"
+                onError={() => {
+                  setImageErrors(prev => ({ ...prev, [product._id]: true }));
+                }}
+              />
+              // <Image
+              //   key={index}
+              //   source={{ uri: `${IMAGE_BASE_URL}${product.image}` }}
+              //   style={styles.productImage}
+              //   resizeMode="cover"
+              // />
+            ))}
       <View style={styles.cardContent}>
         <View style={styles.orderHeader}>
           <View style={styles.statusBadge}>
@@ -104,19 +129,46 @@ export default function TabTwoScreen() {
             </View>
           </View>
   
-          {item.userInfo && (
-            <View style={styles.customerInfo}>
-              <Text style={styles.sectionTitle}>Customer Information</Text>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Email:</Text>
-                <Text style={styles.infoValue}>{item.userInfo.email}</Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Address:</Text>
-                <Text style={styles.infoValue}>{item.userInfo.address}</Text>
-              </View>
-            </View>
-          )}
+      {item?.user && (
+               <View style={styles.customerInfo}>
+                 <Text style={styles.sectionTitle}>Customer Information</Text>
+   
+                 {item?.user?.email && (
+                   <View style={styles.infoRow}>
+                     <Text style={styles.infoLabel}>Email:</Text>
+                     <Text style={styles.infoValue}>{item.user.email}</Text>
+                   </View>
+                 )}
+   
+                 {item?.user?.address && (
+                   <View style={styles.infoRow}>
+                     <Text style={styles.infoLabel}>Address:</Text>
+                     <Text style={styles.infoValue}>{item.user.address}</Text>
+                   </View>
+                 )}
+   
+                 {item?.user?.country && (
+                   <View style={styles.infoRow}>
+                     <Text style={styles.infoLabel}>Country:</Text>
+                     <Text style={styles.infoValue}>{item.user.country}</Text>
+                   </View>
+                 )}
+   
+                 {item?.user?.city && (
+                   <View style={styles.infoRow}>
+                     <Text style={styles.infoLabel}>City:</Text>
+                     <Text style={styles.infoValue}>{item.user.city}</Text>
+                   </View>
+                 )}
+   
+                 {item?.user?.postalCode && (
+                   <View style={styles.infoRow}>
+                     <Text style={styles.infoLabel}>Post Code:</Text>
+                     <Text style={styles.infoValue}>{item.user.postalCode}</Text>
+                   </View>
+                 )}
+               </View>
+             )}
   
           <View style={styles.buttonContainer}>
             <TouchableOpacity
@@ -207,6 +259,11 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  productImage: {
+    width: '100%',
+    height: 180,
+    backgroundColor: '#f9f9f9',
   },
   header: {
     flexDirection: 'row',

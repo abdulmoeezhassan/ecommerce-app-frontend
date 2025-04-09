@@ -74,6 +74,28 @@ export default function HomeScreen() {
   const navigate = () => {
     // router.push('/add-order');
   };
+  const formatImageUrl = (imagePath) => {
+    if (!imagePath) {
+      return 'https://via.placeholder.com/150';
+    }
+    
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+    
+    // Replace backslashes with forward slashes
+    const normalizedPath = imagePath.replace(/\\/g, '/');
+    
+    const baseUrlWithoutTrailingSlash = IMAGE_BASE_URL.endsWith('/') 
+      ? IMAGE_BASE_URL.slice(0, -1) 
+      : IMAGE_BASE_URL;
+    
+    const pathWithoutLeadingSlash = normalizedPath.startsWith('/') 
+      ? normalizedPath.slice(1) 
+      : normalizedPath;
+    
+    return `${baseUrlWithoutTrailingSlash}/${pathWithoutLeadingSlash}`;
+  };
 
   const renderOrderCard = ({ item }) => (
     <TouchableOpacity
@@ -84,7 +106,7 @@ export default function HomeScreen() {
           source={
             imageErrors[item._id] || !product.image
               ? require("@/assets/images/product-placeholder.jpeg")
-              : { uri: `${IMAGE_BASE_URL}${product.image}` }
+              : { uri: formatImageUrl(product.image) }
           }
           style={styles.productImage}
           resizeMode="contain"

@@ -13,6 +13,7 @@ import { AntDesign } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app";
+const IMAGE_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app/";
 
 export default function TabTwoScreen() {
   const [products, setProducts] = useState([]);
@@ -53,6 +54,30 @@ export default function TabTwoScreen() {
 
     fetchProducts();
   }, []);
+
+  const formatImageUrl = (imagePath) => {
+    if (!imagePath) {
+      return 'https://via.placeholder.com/150';
+    }
+    
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+    
+    // Replace backslashes with forward slashes
+    const normalizedPath = imagePath.replace(/\\/g, '/');
+    
+    const baseUrlWithoutTrailingSlash = IMAGE_BASE_URL.endsWith('/') 
+      ? IMAGE_BASE_URL.slice(0, -1) 
+      : IMAGE_BASE_URL;
+    
+    const pathWithoutLeadingSlash = normalizedPath.startsWith('/') 
+      ? normalizedPath.slice(1) 
+      : normalizedPath;
+    
+    return `${baseUrlWithoutTrailingSlash}/${pathWithoutLeadingSlash}`;
+  };
+
 
   const navigate = () => {
     router.push('/add-product');
@@ -105,7 +130,7 @@ export default function TabTwoScreen() {
             source={
               imageErrors[item._id] || !item.image
                 ? require("@/assets/images/product-placeholder.jpeg")
-                : { uri: `${API_BASE_URL}/${item.image}` }
+                : { uri: formatImageUrl(item.image) }
             }
             style={styles.productImage}
             resizeMode="cover"

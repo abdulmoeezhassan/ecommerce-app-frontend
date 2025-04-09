@@ -43,7 +43,28 @@ export default function PastOrders() {
       setLoading(false);
     }
   };
-
+  const formatImageUrl = (imagePath) => {
+    if (!imagePath) {
+      return 'https://via.placeholder.com/150';
+    }
+    
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+    
+    // Replace backslashes with forward slashes
+    const normalizedPath = imagePath.replace(/\\/g, '/');
+    
+    const baseUrlWithoutTrailingSlash = IMAGE_BASE_URL.endsWith('/') 
+      ? IMAGE_BASE_URL.slice(0, -1) 
+      : IMAGE_BASE_URL;
+    
+    const pathWithoutLeadingSlash = normalizedPath.startsWith('/') 
+      ? normalizedPath.slice(1) 
+      : normalizedPath;
+    
+    return `${baseUrlWithoutTrailingSlash}/${pathWithoutLeadingSlash}`;
+  };
 
   useEffect(() => {
     fetchOrders();
@@ -86,7 +107,7 @@ export default function PastOrders() {
           source={
             imageErrors[item._id] || !product.image
               ? require("@/assets/images/product-placeholder.jpeg")
-              : { uri: `${IMAGE_BASE_URL}${product.image}` }
+              : { uri: formatImageUrl(product.image) }
           }
           style={styles.productImage}
           resizeMode="contain"
@@ -178,7 +199,7 @@ export default function PastOrders() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <ThemedText style={styles.title}>My Orders</ThemedText>
+        <ThemedText style={styles.title}>Past Orders</ThemedText>
       </View>
 
       {loading && (

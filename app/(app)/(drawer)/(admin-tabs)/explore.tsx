@@ -27,7 +27,7 @@ export default function TabTwoScreen() {
           throw new Error('User ID not found');
         }
 
-        const response = await axios.get(`${API_BASE_URL}/api/products/get-products-by-supplier/${user_id}`);
+        const response = await axios.get(`${API_BASE_URL}/api/products/get-all-products`);
         
         // Check if the response contains products data
         if (response.data && Array.isArray(response.data.products)) {

@@ -23,7 +23,7 @@ const WelcomeOne = () => {
             </Text>
             <TouchableOpacity 
               style={{ backgroundColor: 'white', paddingVertical: 12, paddingHorizontal: 24, borderRadius: 30, marginTop: 20, flexDirection: 'row', alignItems: 'center' }}
-              onPress={() => router.replace('/welcome2')}
+              onPress={() => router.replace('/welcome-two')}
             >
               <Text style={{ color: 'black', fontWeight: 'bold', fontSize: 16, marginRight: 8 }}>
                 Let's Explore

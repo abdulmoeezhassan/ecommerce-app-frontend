@@ -40,7 +40,7 @@ export default function TabTwoScreen() {
       } catch (err) {
         console.error('Error fetching products:', err);
         
-        // Handle 404 errors more gracefully
+       
         if (err.response && err.response.status === 404) {
           setProducts([]);
           setError(null); // Don't show error for 404, just empty state
@@ -84,7 +84,7 @@ export default function TabTwoScreen() {
         <ThemedView style={styles.productInfo}>
           <View className='flex flex-row justify-between w-full'>
             <ThemedText style={styles.productName}>{item.name}</ThemedText>
-            <ThemedText style={styles.productPrice}>${item.price.toFixed(2)}</ThemedText>
+            <ThemedText style={styles.productPrice}>PKR{item.price.toFixed(2)}</ThemedText>
           </View>
 
           {item.color && item.color.length > 0 && (

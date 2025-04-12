@@ -40,7 +40,7 @@ const OrderConfirmation = () => {
   };
   
   const handleViewOrders = () => {
-    router.push('/profile');
+    router.push('/view-all-orders');
   };
 
   return (

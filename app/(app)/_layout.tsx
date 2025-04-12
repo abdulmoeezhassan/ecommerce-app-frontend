@@ -1,3 +1,77 @@
+import "../../gesture-handler";
+import {
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider,
+} from "@react-navigation/native";
+import { useFonts } from "expo-font";
+import { Redirect, Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { StatusBar } from "expo-status-bar";
+import { useEffect, useCallback, useState } from "react";
+import "react-native-reanimated";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { useSession } from "@/components/ctx";
+import { View, Text } from "react-native";
+
+// Prevent splash screen from hiding automatically
+SplashScreen.preventAutoHideAsync();
+
+export default function AppLayout() {
+  const colorScheme = useColorScheme();
+  const [fontsLoaded] = useFonts({
+    SpaceMono: require("../../assets/fonts/SpaceMono-Regular.ttf"),
+  });
+
+  const { session, isLoading } = useSession();
+  const [isAppReady, setAppReady] = useState(false);
+
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded && !isLoading) {
+      setAppReady(true);
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, isLoading]);
+
+  useEffect(() => {
+    onLayoutRootView();
+  }, [fontsLoaded, isLoading]);
+
+  if (!fontsLoaded || isLoading || !isAppReady) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
+  if (!session) {
+    return <Redirect href="/sign-in" />;
+  }
+
+  return (
+    <ThemeProvider value={colorScheme === "light" ? DarkTheme : DefaultTheme}>
+      <StatusBar style="auto" />
+      <Stack>
+        <Stack.Screen name={"(drawer)"} options={{ headerShown: false }} />
+      </Stack>
+    </ThemeProvider>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // import "../../gesture-handler";
 // import {
 //   DarkTheme,
@@ -47,7 +121,7 @@
 //   }
 
 //   return (
-//     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+//     <ThemeProvider value={colorScheme === "light" ? DarkTheme : DefaultTheme}>
 //       <StatusBar style="auto" />
 //       <Stack>
 //         <Stack.Screen name={"(drawer)"} options={{ headerShown: false }} />
@@ -59,45 +133,45 @@
 
 
 
-import "../../gesture-handler";
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from "@react-navigation/native";
-import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
-import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
-import "react-native-reanimated";
-import { useColorScheme } from "@/hooks/useColorScheme";
+// import "../../gesture-handler";
+// import {
+//   DarkTheme,
+//   DefaultTheme,
+//   ThemeProvider,
+// } from "@react-navigation/native";
+// import { useFonts } from "expo-font";
+// import { Stack } from "expo-router";
+// import * as SplashScreen from "expo-splash-screen";
+// import { StatusBar } from "expo-status-bar";
+// import { useEffect } from "react";
+// import "react-native-reanimated";
+// import { useColorScheme } from "@/hooks/useColorScheme";
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
+// // Prevent the splash screen from auto-hiding before asset loading is complete.
+// SplashScreen.preventAutoHideAsync();
 
-export default function AppLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require("../../assets/fonts/SpaceMono-Regular.ttf"),
-  });
+// export default function AppLayout() {
+//   const colorScheme = useColorScheme();
+//   const [loaded] = useFonts({
+//     SpaceMono: require("../../assets/fonts/SpaceMono-Regular.ttf"),
+//   });
 
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
+//   useEffect(() => {
+//     if (loaded) {
+//       SplashScreen.hideAsync();
+//     }
+//   }, [loaded]);
 
-  if (!loaded) {
-    return null;
-  }
+//   if (!loaded) {
+//     return null;
+//   }
 
-  return (
-    <ThemeProvider value={colorScheme === "light" ? DarkTheme : DefaultTheme}>
-      <StatusBar style="auto" />
-      <Stack>
-        <Stack.Screen name={"(drawer)"} options={{ headerShown: false }} />
-      </Stack>
-    </ThemeProvider>
-  );
-}
+//   return (
+//     <ThemeProvider value={colorScheme === "light" ? DarkTheme : DefaultTheme}>
+//       <StatusBar style="auto" />
+//       <Stack>
+//         <Stack.Screen name={"(drawer)"} options={{ headerShown: false }} />
+//       </Stack>
+//     </ThemeProvider>
+//   );
+// }

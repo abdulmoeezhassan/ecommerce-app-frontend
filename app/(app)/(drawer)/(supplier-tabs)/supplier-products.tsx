@@ -133,7 +133,7 @@ export default function TabTwoScreen() {
                 : { uri: formatImageUrl(item.image) }
             }
             style={styles.productImage}
-            resizeMode="cover"
+            resizeMode="contain"
             onError={() => {
               console.log(`Failed to load image: ${API_BASE_URL}/${item.image}`);
               setImageErrors(prev => ({...prev, [item._id]: true}));
@@ -342,6 +342,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 180,
     backgroundColor: '#f9f9f9',
+    
   },
   categoryBadge: {
     position: 'absolute',

@@ -83,13 +83,13 @@ export default function TabTwoScreen() {
 
         <ThemedView style={styles.productInfo}>
           <View className='flex flex-row justify-between w-full'>
-            <ThemedText style={styles.productName}>{item.name}</ThemedText>
-            <ThemedText style={styles.productPrice}>PKR{item.price.toFixed(2)}</ThemedText>
+            <ThemedText style={styles.productName} className='text-black'>{item.name}</ThemedText>
+            <ThemedText style={styles.productPrice}>${item.price.toFixed(2)}</ThemedText>
           </View>
 
           {item.color && item.color.length > 0 && (
             <ThemedView style={styles.attributeRow}>
-              <ThemedText style={styles.attributeLabel}>Colors:</ThemedText>
+              <ThemedText style={styles.attributeLabel} className='text-black'>Colors:</ThemedText>
               <ThemedView style={styles.colorContainer}>
                 {item.color.map((colorName, index) => (
                   <ThemedView
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
   productCard: {
     marginBottom: 16,
     borderRadius: 12,
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -264,6 +264,7 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     position: 'relative',
+    backgroundColor: '#ffffff', 
   },
   productImage: {
     width: '100%',
@@ -285,11 +286,13 @@ const styles = StyleSheet.create({
   },
   productInfo: {
     padding: 16,
+    backgroundColor: '#ffffff', 
   },
   productName: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 6,
+    color: 'black'
   },
   productPrice: {
     fontSize: 18,
@@ -300,6 +303,8 @@ const styles = StyleSheet.create({
   attributeRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#ffffff', 
+
     marginBottom: 8,
   },
   attributeLabel: {
@@ -307,9 +312,11 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginRight: 8,
     width: 60,
+    color: 'black'
   },
   colorContainer: {
     flexDirection: 'row',
+    backgroundColor: '#ffffff', 
   },
   colorDot: {
     width: 16,
@@ -322,6 +329,7 @@ const styles = StyleSheet.create({
   chipContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    backgroundColor: '#ffffff', 
   },
   chip: {
     backgroundColor: '#f0f0f0',
@@ -333,6 +341,7 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: 12,
+    color: 'black'
   },
   qualityText: {
     fontSize: 14,

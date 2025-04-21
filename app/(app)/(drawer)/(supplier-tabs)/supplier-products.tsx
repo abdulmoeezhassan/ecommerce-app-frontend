@@ -13,7 +13,10 @@ import { AntDesign } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app";
+// const API_BASE_URL = "http://localhost:3000"
+
 const IMAGE_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app/";
+// const IMAGE_BASE_URL = "http://localhost:3000/"
 
 export default function TabTwoScreen() {
   const [products, setProducts] = useState([]);
@@ -25,25 +28,25 @@ export default function TabTwoScreen() {
     const fetchProducts = async () => {
       try {
         const user_id = await AsyncStorage.getItem('user_id');
-        
+
         if (!user_id) {
           throw new Error('User ID not found');
         }
-        
+
         const response = await axios.get(`${API_BASE_URL}/api/products/get-products-by-supplier/${user_id}`);
-        
+
         if (response.data && Array.isArray(response.data.products)) {
           setProducts(response.data.products);
         } else {
           setProducts([]);
         }
-        
+
       } catch (err) {
         console.error('Error fetching products:', err);
-        
+
         if (err.response && err.response.status === 404) {
           setProducts([]);
-          setError(null); 
+          setError(null);
         } else {
           setError(err.message || 'Failed to fetch products');
         }
@@ -59,23 +62,25 @@ export default function TabTwoScreen() {
     if (!imagePath) {
       return 'https://via.placeholder.com/150';
     }
-    
+
     if (imagePath.startsWith('http')) {
       return imagePath;
     }
-    
+
     // Replace backslashes with forward slashes
     const normalizedPath = imagePath.replace(/\\/g, '/');
-    
-    const baseUrlWithoutTrailingSlash = IMAGE_BASE_URL.endsWith('/') 
-      ? IMAGE_BASE_URL.slice(0, -1) 
+
+    const baseUrlWithoutTrailingSlash = IMAGE_BASE_URL.endsWith('/')
+      ? IMAGE_BASE_URL.slice(0, -1)
       : IMAGE_BASE_URL;
-    
-    const pathWithoutLeadingSlash = normalizedPath.startsWith('/') 
-      ? normalizedPath.slice(1) 
+
+    const pathWithoutLeadingSlash = normalizedPath.startsWith('/')
+      ? normalizedPath.slice(1)
       : normalizedPath;
-    
-    return `${baseUrlWithoutTrailingSlash}/${pathWithoutLeadingSlash}`;
+
+    const formattedUrl = `${baseUrlWithoutTrailingSlash}/${pathWithoutLeadingSlash}`;
+    console.log("formattedUrl", formattedUrl)
+    return formattedUrl;
   };
 
 
@@ -83,13 +88,10 @@ export default function TabTwoScreen() {
     router.push('/add-product');
   };
 
-  // Parse JSON strings into arrays if needed
   const parseArrayField = (field) => {
     if (!field) return [];
-    
-    // If already an array
+
     if (Array.isArray(field)) {
-      // Handle case where array contains JSON strings
       if (field.length > 0 && typeof field[0] === 'string' && field[0].startsWith('[')) {
         try {
           return JSON.parse(field[0]);
@@ -99,8 +101,7 @@ export default function TabTwoScreen() {
       }
       return field;
     }
-    
-    // If it's a string that looks like JSON
+
     if (typeof field === 'string') {
       if (field.startsWith('[')) {
         try {
@@ -111,7 +112,7 @@ export default function TabTwoScreen() {
       }
       return [field];
     }
-    
+
     return [];
   };
 
@@ -120,43 +121,43 @@ export default function TabTwoScreen() {
     const colors = parseArrayField(item.color);
     const sizes = parseArrayField(item.size);
     const qualities = parseArrayField(item.quality);
-    
+
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.productCard}
       >
         <View style={styles.cardContent}>
           <Image
             source={
-              imageErrors[item._id] || !item.image
+              imageErrors[item._id] || !item.colorImages
                 ? require("@/assets/images/product-placeholder.jpeg")
-                : { uri: formatImageUrl(item.image) }
+                : { uri: formatImageUrl(Object.values(item.colorImages)[0]) }
             }
             style={styles.productImage}
             resizeMode="contain"
             onError={() => {
-              console.log(`Failed to load image: ${API_BASE_URL}/${item.image}`);
-              setImageErrors(prev => ({...prev, [item._id]: true}));
+              console.log(`Failed to load image: ${API_BASE_URL}/${Object.values(item.colorImages)[0]}`);
+              setImageErrors(prev => ({ ...prev, [item._id]: true }));
             }}
           />
-          
+
           <View style={styles.categoryBadge}>
             <ThemedText style={styles.categoryText}>{item.category}</ThemedText>
           </View>
-          
+
           <View style={styles.productInfo}>
             <View style={styles.productHeader}>
               <ThemedText style={styles.productName}>{item.name}</ThemedText>
               <ThemedText style={styles.productPrice}>PKR {item.price.toFixed(2)}</ThemedText>
             </View>
-            
+
             {colors && colors.length > 0 && (
               <View style={styles.attributeRow}>
                 <ThemedText style={styles.attributeLabel}>Colors:</ThemedText>
                 <View style={styles.colorContainer}>
                   {colors.map((colorName, index) => (
-                    <View 
-                      key={index} 
+                    <View
+                      key={index}
                       style={[
                         styles.colorDot,
                         { backgroundColor: getColorHex(colorName) }
@@ -166,7 +167,7 @@ export default function TabTwoScreen() {
                 </View>
               </View>
             )}
-            
+
             {sizes && sizes.length > 0 && (
               <View style={styles.attributeRow}>
                 <ThemedText style={styles.attributeLabel}>Sizes:</ThemedText>
@@ -181,12 +182,12 @@ export default function TabTwoScreen() {
                 </View>
               </View>
             )}
-            
+
             {qualities && qualities.length > 0 && (
               <View style={styles.attributeRow}>
                 <ThemedText style={styles.attributeLabel}>Quality:</ThemedText>
                 <ThemedText style={styles.qualityText}>
-                  {qualities.map(q => 
+                  {qualities.map(q =>
                     typeof q === 'string' ? q.replace(/[\[\]"']/g, '') : q
                   ).join(', ')}
                 </ThemedText>
@@ -197,11 +198,11 @@ export default function TabTwoScreen() {
       </TouchableOpacity>
     );
   };
-  
+
   // Helper function to convert color names to hex codes
   const getColorHex = (colorName) => {
     if (!colorName || typeof colorName !== 'string') return '#888888';
-    
+
     const colorMap = {
       red: '#ff5252',
       blue: '#536dfe',
@@ -216,7 +217,7 @@ export default function TabTwoScreen() {
       brown: '#795548',
       // Add more colors as needed
     };
-    
+
     return colorMap[colorName.toLowerCase()] || '#888888';
   };
 
@@ -224,7 +225,7 @@ export default function TabTwoScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <ThemedText style={styles.title}>My Products</ThemedText>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.addButton}
           onPress={navigate}
         >
@@ -251,7 +252,7 @@ export default function TabTwoScreen() {
           </ThemedText>
         </View>
       ) : (
-        <FlatList 
+        <FlatList
           data={products}
           renderItem={renderProductCard}
           keyExtractor={(item) => item._id.toString()}

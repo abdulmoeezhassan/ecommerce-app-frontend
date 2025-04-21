@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   ScrollView,
   Platform,
+  FlatList,
 } from "react-native";
 import { StyleSheet, Dimensions } from "react-native";
 import { useForm, Controller } from "react-hook-form";
@@ -21,22 +22,36 @@ import axios from "axios";
 import { Picker } from "@react-native-picker/picker";
 
 const API_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app";
+//  const API_BASE_URL = "http://localhost:3000"
+interface ImageAsset {
+  uri: string;
+  fileName?: string;
+  type?: string;
+  fileSize?: number;
+  width?: number;
+  height?: number;
+}
 
 export default function AddProduct() {
   const [focusedInput, setFocusedInput] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [selectedImages, setSelectedImages] = useState(null);
   const [screenHeight, setScreenHeight] = useState(
     Dimensions.get("window").height
   );
   const [supplierId, setSupplierId] = useState("");
   const navigate = useNavigation();
+  
+  // State for colors and their images
+const [colorImages, setColorImages] = useState<Record<string, ImageAsset>>({});
+  const [colors, setColors] = useState([]);
+  const [currentColor, setCurrentColor] = useState("");
 
   const {
     control,
     handleSubmit,
     trigger,
     formState: { errors },
+    watch,
   } = useForm({
     mode: "onChange",
     defaultValues: {
@@ -70,7 +85,55 @@ export default function AddProduct() {
     getSupplierIdFromStorage();
   }, []);
 
-  const uploadImages = () => {
+  // Function to add a color to the list
+  const addColor = () => {
+    if (!currentColor.trim()) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Please enter a color name",
+      });
+      return;
+    }
+    
+    if (colors.includes(currentColor.trim())) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "This color is already added",
+      });
+      return;
+    }
+    
+    const updatedColors = [...colors, currentColor.trim()];
+    setColors(updatedColors);
+    
+    // Update the form color field
+    const colorString = updatedColors.join(", ");
+    control._formValues.color = colorString;
+    trigger("color");
+    
+    setCurrentColor("");
+  };
+
+  // Function to remove a color from the list
+  const removeColor = (colorToRemove) => {
+    const updatedColors = colors.filter((color) => color !== colorToRemove);
+    setColors(updatedColors);
+    
+    // Also remove the image associated with this color
+    const updatedColorImages = { ...colorImages };
+    delete updatedColorImages[colorToRemove];
+    setColorImages(updatedColorImages);
+    
+    // Update the form color field
+    const colorString = updatedColors.join(", ");
+    control._formValues.color = colorString;
+    trigger("color");
+  };
+
+  // Function to upload an image for a specific color
+  const uploadImageForColor = (color) => {
     ImagePicker.launchImageLibrary(
       {
         mediaType: "photo",
@@ -79,12 +142,14 @@ export default function AddProduct() {
       },
       (response) => {
         if (!response.didCancel && response.assets && response.assets.length > 0) {
-          setSelectedImages(response.assets[0]); // Store only the first image
+          setColorImages(prevState => ({
+            ...prevState,
+            [color]: response.assets[0]
+          }));
         }
       }
     );
   };
-
 
   useEffect(() => {
     const onChange = () => setScreenHeight(Dimensions.get("window").height);
@@ -104,53 +169,82 @@ export default function AddProduct() {
         return;
       }
   
-      setLoading(true);
-      const formData = new FormData();
-      
-      formData.append("category", data.category);
-      formData.append("name", data.name);
-      formData.append("price", data.price);
-      formData.append("color", JSON.stringify(data.color.split(",").map(item => item.trim())));
-      formData.append("quality", JSON.stringify(data.quality.split(",").map(item => item.trim())));
-      formData.append("size", JSON.stringify(data.size.split(",").map(item => item.trim())));
-      formData.append("supplierId", supplierId);
-      
-      if (selectedImages) {
-        const fileToUpload = {
-          uri: selectedImages.uri,
-          name: selectedImages.fileName || 'image.jpg',
-          type: selectedImages.type || 'image/jpeg'
-        };
-        
-        const blob = await (await fetch(fileToUpload.uri)).blob();
-        formData.append('image', blob, fileToUpload.name);
-        console.log("Image uploaded:", fileToUpload);
-        
+      // Check if images are uploaded for all colors
+      const missingImageColors = colors.filter(color => !colorImages[color]);
+      if (missingImageColors.length > 0) {
+        Toast.show({
+          type: "error",
+          text1: "Missing Images",
+          text2: `Please upload images for: ${missingImageColors.join(", ")}`,
+        });
+        return;
       }
+  
+      setLoading(true);
       
+      // Create a payload object
+      const payload = {
+        category: data.category,
+        name: data.name,
+        price: data.price,
+        color: colors,
+        quality: data.quality.split(",").map(item => item.trim()),
+        size: data.size.split(",").map(item => item.trim()),
+        supplierId: supplierId,
+        colorImageData: {}
+      };
       
+      // Convert images to base64 and add to payload
+      await Promise.all(
+        Object.entries(colorImages).map(async ([color, imageData]) => {
+          if (imageData && imageData.uri) {
+            // Get the file extension
+            const fileExtension = imageData.type ? 
+              imageData.type.split('/')[1] : 'jpg';
+            
+            // Convert image to base64
+            const response = await fetch(imageData.uri);
+            const blob = await response.blob();
+            
+            return new Promise<void>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => {
+                // Add to payload with color as key
+                payload.colorImageData[color] = {
+                  data: reader.result.toString().split(',')[1], // Remove the data:image/jpeg;base64, prefix
+                  name: `${color}_${Date.now()}.${fileExtension}`,
+                  type: imageData.type || 'image/jpeg'
+                };
+                resolve();
+              };
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+            });
+          }
+        })
+      );
+  
       const response = await axios.post(
         `${API_BASE_URL}/api/products/create-product`,
-        formData,
+        payload,
         {
           headers: {
-            'Content-Type': 'multipart/form-data',
+            'Content-Type': 'application/json',
             'Accept': 'application/json'
-          },
-          transformRequest: (data) => data, 
+          }
         }
       );
-      
+  
       setLoading(false);
-      
+  
       if (response.data) {
         Toast.show({
           type: "success",
           text1: "Success",
           text2: "Product added successfully!",
         });
-      }
       router.push('/supplier-products');
+      }
       window.location.reload();
     } catch (error) {
       setLoading(false);
@@ -161,38 +255,34 @@ export default function AddProduct() {
       });
     }
   };
-
   return (
     <ScrollView style={styles.container}>
       <View style={styles.formContainer}>
         <Text style={styles.headerText}>Add Product</Text>
 
         <Controller
-  control={control}
-  name="category"
-  rules={{ required: "Category is required" }}
-  render={({ field: { onChange, value } }) => (
-    <View>
-      <Picker
-        selectedValue={value}
-        onValueChange={(itemValue) => {
-          onChange(itemValue);
-          trigger("category");
-        }}
-        style={[styles.input, errors.category && styles.inputError]}
-      >
-        <Picker.Item label="Select Category" value="" />
-        <Picker.Item label="T-Shirt" value="tshirt" />
-        <Picker.Item label="Hoodies" value="hoodies" />
-        <Picker.Item label="Jacket" value="jacket" />
-      </Picker>
-      {errors.category && <Text style={styles.errorText}>{errors.category.message}</Text>}
-    </View>
-  )}
-/>
-        {errors.category && (
-          <Text style={styles.errorText}>{errors.category.message}</Text>
-        )}
+          control={control}
+          name="category"
+          rules={{ required: "Category is required" }}
+          render={({ field: { onChange, value } }) => (
+            <View>
+              <Picker
+                selectedValue={value}
+                onValueChange={(itemValue) => {
+                  onChange(itemValue);
+                  trigger("category");
+                }}
+                style={[styles.input, errors.category && styles.inputError]}
+              >
+                <Picker.Item label="Select Category" value="" />
+                <Picker.Item label="T-Shirt" value="tshirt" />
+                <Picker.Item label="Hoodies" value="hoodies" />
+                <Picker.Item label="Jacket" value="jacket" />
+              </Picker>
+              {errors.category && <Text style={styles.errorText}>{errors.category.message}</Text>}
+            </View>
+          )}
+        />
 
         <Controller
           control={control}
@@ -208,7 +298,6 @@ export default function AddProduct() {
                 focusedInput === "name" ? styles.inputFocused : null,
               ]}
               placeholder="Name"
-              className="focus:outline-none focus:border-gray-900 mt-2"
               value={value}
               onFocus={() => setFocusedInput("name")}
               onBlur={() => setFocusedInput(null)}
@@ -242,7 +331,6 @@ export default function AddProduct() {
               ]}
               placeholder="Price"
               keyboardType="numeric"
-              className="focus:outline-none focus:border-gray-900 mt-2"
               value={value}
               onFocus={() => setFocusedInput("price")}
               onBlur={() => setFocusedInput(null)}
@@ -257,33 +345,99 @@ export default function AddProduct() {
           <Text style={styles.errorText}>{errors.price.message}</Text>
         )}
 
+        {/* Color input section */}
+        <View style={styles.colorInputContainer}>
+          <TextInput
+            style={[
+              styles.colorInput,
+              focusedInput === "currentColor" ? styles.inputFocused : null,
+            ]}
+            placeholder="Enter a color"
+            value={currentColor}
+            onFocus={() => setFocusedInput("currentColor")}
+            onBlur={() => setFocusedInput(null)}
+            onChangeText={(text) => setCurrentColor(text)}
+          />
+          <TouchableOpacity style={styles.addColorButton} onPress={addColor}>
+            <Text style={styles.addColorButtonText}>Add</Text>
+          </TouchableOpacity>
+        </View>
+
         <Controller
           control={control}
           name="color"
           rules={{
-            required: "Color is required",
+            required: "At least one color is required",
+            validate: value => colors.length > 0 || "Please add at least one color"
           }}
-          render={({ field: { onChange, value, onBlur } }) => (
-            <TextInput
-              style={[
-                styles.input,
-                errors.color && styles.inputError,
-                focusedInput === "color" ? styles.inputFocused : null,
-              ]}
-              placeholder="Colors (comma separated, e.g. Red, Blue, Green)"
-              className="focus:outline-none focus:border-gray-900 mt-2"
-              value={value}
-              onFocus={() => setFocusedInput("color")}
-              onBlur={() => setFocusedInput(null)}
-              onChangeText={(text) => {
-                onChange(text);
-                trigger("color");
-              }}
-            />
+          render={({ field: { onChange, value } }) => (
+            <View style={styles.hiddenInput}>
+              <TextInput 
+                value={colors.join(", ")} 
+                editable={false}
+                style={{height: 0, width: 0}}
+                onChangeText={(text) => {
+                  onChange(text);
+                }}
+              />
+            </View>
           )}
         />
         {errors.color && (
           <Text style={styles.errorText}>{errors.color.message}</Text>
+        )}
+
+        {/* Color chips and image upload section */}
+        {colors.length > 0 && (
+          <View style={styles.colorsContainer}>
+            <Text style={styles.sectionTitle}>Selected Colors:</Text>
+            <FlatList
+              data={colors}
+              horizontal={false}
+              numColumns={1}
+              keyExtractor={(item) => item}
+              renderItem={({ item }) => (
+                <View style={styles.colorItemContainer}>
+                  <View style={styles.colorChipRow}>
+                    <View style={[styles.colorChip, { backgroundColor: item.toLowerCase() }]} />
+                    <Text style={styles.colorName}>{item}</Text>
+                    <TouchableOpacity
+                      style={styles.removeButton}
+                      onPress={() => removeColor(item)}
+                    >
+                      <Ionicons name="close-circle" size={24} color="red" />
+                    </TouchableOpacity>
+                  </View>
+                  
+                  <View style={styles.imageUploadSection}>
+                    {colorImages[item] ? (
+                      <View style={styles.imageWithButton}>
+                        <Image
+                          source={{ uri: colorImages[item].uri }}
+                          style={styles.uploadedImage}
+                          resizeMode="contain"
+                        />
+                        <TouchableOpacity
+                          style={styles.changeImageButton}
+                          onPress={() => uploadImageForColor(item)}
+                        >
+                          <Text style={styles.changeImageText}>Change</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ) : (
+                      <TouchableOpacity
+                        style={styles.uploadButton}
+                        onPress={() => uploadImageForColor(item)}
+                      >
+                        <Ionicons name="cloud-upload-outline" size={18} color="white" />
+                        <Text style={styles.uploadButtonSmallText}>Upload Image</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
+              )}
+            />
+          </View>
         )}
 
         <Controller
@@ -300,7 +454,6 @@ export default function AddProduct() {
                 focusedInput === "quality" ? styles.inputFocused : null,
               ]}
               placeholder="Qualities (comma separated, e.g. 100, 200, 300)"
-              className="focus:outline-none focus:border-gray-900 mt-2"
               value={value}
               onFocus={() => setFocusedInput("quality")}
               onBlur={() => setFocusedInput(null)}
@@ -329,7 +482,6 @@ export default function AddProduct() {
                 focusedInput === "size" ? styles.inputFocused : null,
               ]}
               placeholder="Sizes (comma separated, e.g. S, M, L, XL)"
-              className="focus:outline-none focus:border-gray-900 mt-2"
               value={value}
               onFocus={() => setFocusedInput("size")}
               onBlur={() => setFocusedInput(null)}
@@ -344,38 +496,19 @@ export default function AddProduct() {
           <Text style={styles.errorText}>{errors.size.message}</Text>
         )}
 
-        {selectedImages && (
-          <View style={styles.imagePreviewContainer}>
-            <Image
-              source={{ uri: selectedImages.uri }}
-              style={styles.uploadedImage}
-            />
-          </View>
-        )}
-
-        <TouchableOpacity style={styles.uploadButton} onPress={uploadImages}>
-          <Ionicons name="cloud-upload-outline" size={24} color="white" />
-          <Text style={styles.uploadButtonText}>Upload Image</Text>
-        </TouchableOpacity>
-
         <TouchableOpacity
           style={styles.button}
           activeOpacity={0.8}
           onPress={handleSubmit(onSubmit)}
-          className="mt-4 flex items-center justify-center"
           disabled={loading}
         >
           {loading ? (
             <ActivityIndicator
-              className="flex items-center justify-center"
               size="small"
               color="white"
             />
           ) : (
-            <Text
-              className="flex items-center justify-center"
-              style={styles.buttonText}
-            >
+            <Text style={styles.buttonText}>
               Add Product
             </Text>
           )}
@@ -438,31 +571,103 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16
   },
+  colorInputContainer: {
+    flexDirection: "row",
+    marginBottom: 15,
+  },
+  colorInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 15,
+    borderRadius: 8,
+    backgroundColor: "#fff",
+    fontSize: 16,
+    marginRight: 10,
+  },
+  addColorButton: {
+    backgroundColor: "black",
+    paddingHorizontal: 20,
+    justifyContent: "center",
+    borderRadius: 8,
+  },
+  addColorButtonText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+  colorsContainer: {
+    marginBottom: 15,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  colorItemContainer: {
+    marginBottom: 15,
+    backgroundColor: "#f9f9f9",
+    borderRadius: 8,
+    padding: 10,
+  },
+  colorChipRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  colorChip: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+  colorName: {
+    flex: 1,
+    fontSize: 16,
+  },
+  removeButton: {
+    padding: 5,
+  },
+  imageUploadSection: {
+    alignItems: "flex-start",
+  },
   uploadButton: {
     backgroundColor: "black",
-    padding: 12,
+    padding: 10,
     borderRadius: 8,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 10,
   },
-  uploadButtonText: {
+  uploadButtonSmallText: {
     color: "white",
     fontWeight: "bold",
-    marginLeft: 8,
-    fontSize: 16,
+    marginLeft: 5,
+    fontSize: 14,
   },
   uploadedImage: {
     width: 80,
     height: 80,
     borderRadius: 8,
-    margin: 5,
   },
-  imagePreviewContainer: {
+  imageWithButton: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    marginVertical: 10,
-    justifyContent: "center",
+    alignItems: "center",
+  },
+  changeImageButton: {
+    backgroundColor: "#555",
+    padding: 8,
+    borderRadius: 6,
+    marginLeft: 10,
+  },
+  changeImageText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 12,
+  },
+  hiddenInput: {
+    height: 0,
+    overflow: 'hidden',
   },
 });

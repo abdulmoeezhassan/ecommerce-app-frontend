@@ -9,11 +9,11 @@ import { router } from 'expo-router';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// const API_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app";
-// const IMAGE_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app";
+const API_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app";
+const IMAGE_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app";
 
-const API_BASE_URL = "http://localhost:3000";
-const IMAGE_BASE_URL = "http://localhost:3000";
+// const API_BASE_URL = "http://localhost:3000";
+// const IMAGE_BASE_URL = "http://localhost:3000";
 
 export default function TabTwoScreen() {
   const [products, setProducts] = useState([]);

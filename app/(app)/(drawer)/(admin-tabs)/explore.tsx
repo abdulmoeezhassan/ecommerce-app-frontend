@@ -9,7 +9,11 @@ import { router } from 'expo-router';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app";
+// const API_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app";
+// const IMAGE_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app";
+
+const API_BASE_URL = "http://localhost:3000";
+const IMAGE_BASE_URL = "http://localhost:3000";
 
 export default function TabTwoScreen() {
   const [products, setProducts] = useState([]);
@@ -59,23 +63,49 @@ export default function TabTwoScreen() {
     router.push('/add-product');
   };
 
+  const formatImageUrl = (imagePath) => {
+    if (!imagePath) {
+      return 'https://via.placeholder.com/150';
+    }
+
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+
+    // Replace backslashes with forward slashes
+    const normalizedPath = imagePath.replace(/\\/g, '/');
+
+    const baseUrlWithoutTrailingSlash = IMAGE_BASE_URL.endsWith('/')
+      ? IMAGE_BASE_URL.slice(0, -1)
+      : IMAGE_BASE_URL;
+
+    const pathWithoutLeadingSlash = normalizedPath.startsWith('/')
+      ? normalizedPath.slice(1)
+      : normalizedPath;
+
+    const formattedUrl = `${baseUrlWithoutTrailingSlash}/${pathWithoutLeadingSlash}`;
+    console.log("formattedUrl", formattedUrl)
+    return formattedUrl;
+  };
+
   const renderProductCard = ({ item }) => (
     <TouchableOpacity
       style={styles.productCard}
     >
       <ThemedView style={styles.cardContent}>
-        <Image
-          source={
-            imageErrors[item._id] || !item.image
-              ? require("@/assets/images/product-placeholder.jpeg")
-              : { uri: `${API_BASE_URL}/${item.image}` }
-          }
-          style={styles.productImage}
-          onError={() => {
-            console.log(`Failed to load image: ${API_BASE_URL}/${item.image}`);
-            setImageErrors(prev => ({ ...prev, [item._id]: true }));
-          }}
-        />
+         <Image
+                  source={
+                    imageErrors[item._id] || !item.colorImages
+                      ? require("@/assets/images/product-placeholder.jpeg")
+                      : { uri: formatImageUrl(Object.values(item.colorImages)[0]) }
+                  }
+                  style={styles.productImage}
+                  resizeMode="contain"
+                  onError={() => {
+                    console.log(`Failed to load image: ${API_BASE_URL}/${Object.values(item.colorImages)[0]}`);
+                    setImageErrors(prev => ({ ...prev, [item._id]: true }));
+                  }}
+                />
 
         <ThemedView style={styles.categoryBadge}>
           <ThemedText style={styles.categoryText}>{item.category}</ThemedText>

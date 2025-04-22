@@ -55,7 +55,15 @@ export default function SupplierTabsLayout() {
       ),
     }}
   />
-
+<Tabs.Screen
+    name="supplier-profile"
+    options={{
+      title: "Profile",
+      tabBarIcon: ({ color }) => (
+        <FontAwesome name="user" size={24} color={color} />
+      ),
+    }}
+  />
   {/* <Tabs.Screen
     name="custom-design"
     options={{

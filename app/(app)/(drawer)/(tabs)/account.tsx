@@ -96,7 +96,7 @@ const AccountScreen = () => {
         )}
 </View>
         <View style={styles.menuContainer}>
-          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/view-all-orders')}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/user-orders')}>
             <Text style={styles.menuTitle}>My Order</Text>
             <View style={styles.rightContent}>
               <Text style={styles.viewAllText}>View all orders</Text>

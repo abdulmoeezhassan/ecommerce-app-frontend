@@ -222,9 +222,9 @@ export default function Layout() {
         }}
       />
       <Drawer.Screen
-        name="custom-design"
+        name="supplier-profile"
         options={{
-          title: "Custom Design",
+          title: "Profile",
           headerLeft: () => <BackButton />,
         }}
       />

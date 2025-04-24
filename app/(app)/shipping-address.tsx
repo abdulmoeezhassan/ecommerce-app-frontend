@@ -169,13 +169,14 @@ const ShippingForm = () => {
     for (const item of cart) {
       const productData = {
         productId: item.id,
+        productImage: item.image || null,
         quantity: item.quantity,
         color: item.color || null,
         size: item.size || null,
         quality: item.quality || null,
         price: item.price,
         customDesignPath: item.customDesignPath || null, 
-        description: item.description || ''
+        description: item.description || '',
       };
       
       // Add custom design data if present

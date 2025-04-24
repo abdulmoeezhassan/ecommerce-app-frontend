@@ -23,8 +23,8 @@ import Toast from 'react-native-toast-message';
 import * as ImagePicker from 'react-native-image-picker';
 
 const { width } = Dimensions.get('window');
-// const IMAGE_BASE_URL = 'https://ecommerce-app-backend-indol.vercel.app'; // Base URL for images
-// const API_BASE_URL = 'https://ecommerce-app-backend-indol.vercel.app/api/products'; // Base API URL
+// const IMAGE_BASE_URL = 'https://ecommerce-app-backend-indol.vercel.app'; 
+// const API_BASE_URL = 'https://ecommerce-app-backend-indol.vercel.app/api/products';
 const IMAGE_BASE_URL='http://localhost:3000'
 const API_BASE_URL='http://localhost:3000/api/products'
 
@@ -225,23 +225,6 @@ const ProductDetail = () => {
   
 //   return `${baseUrlWithoutTrailingSlash}/${pathWithoutLeadingSlash}`;
 // };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   // Image upload functionality
   const uploadImage = () => {
     ImagePicker.launchImageLibrary(

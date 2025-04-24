@@ -43,11 +43,11 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-        name="explore"
+        name="user-orders"
         options={{
-          title: "Notifications",
+          title: "user orders",
           tabBarIcon: ({ color }) => (
-            <FontAwesome name="bell" size={24} color={color} />
+             <FontAwesome name="history" size={24} color={color} />
           ),
         }}
       />

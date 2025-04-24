@@ -2,11 +2,8 @@ import { useState, useEffect } from "react";
 import { View, Text, FlatList, StyleSheet, TouchableOpacity } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
-import { router } from "expo-router";
-import userService from "@/services/user-service/user-service";
-import Icon from "react-native-vector-icons/FontAwesome";
 import axios from "axios";
-
+import Icon from "react-native-vector-icons/FontAwesome";
 
 const API_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app";
 
@@ -14,7 +11,7 @@ const Users = () => {
   const [userData, setUserData] = useState([]);
   const navigation = useNavigation();
 
-  const getAllOpportunities = async () => {
+  const getAllUsers = async () => {
     try {
       const token = await AsyncStorage.getItem("accessToken");
       if (!token) {
@@ -22,21 +19,15 @@ const Users = () => {
       }
 
       const response = await axios.get(`${API_BASE_URL}/api/users/get-all-users`);
-      console.log(response);
       setUserData(response.data?.data || []);
-
     } catch (error) {
-      console.error("Failed to fetch templates:", error);
+      console.error("Failed to fetch users:", error);
     }
   };
 
   useEffect(() => {
-    getAllOpportunities();
+    getAllUsers();
   }, []);
-
-  const handleViewDetails = (item) => {
-    // router.push({ pathname: "/opportunities-details", params: { id: item._id } });
-  };
 
   const capitalizeFirstLetter = (text) => {
     if (!text) return "";
@@ -46,13 +37,22 @@ const Users = () => {
   const renderItem = ({ item, index }) => (
     <TouchableOpacity
       style={[styles.row, index % 2 === 0 ? styles.evenRow : styles.oddRow]}
-      onPress={() => handleViewDetails(item)}
+      onPress={() => console.log("View Details", item)}
     >
       <View style={styles.leftContainer}>
         <Icon name="user" size={40} color="#555" style={styles.icon} />
         <View style={styles.textContainer}>
-          <Text style={[styles.name]}>{capitalizeFirstLetter(item.firstName)} {capitalizeFirstLetter(item.lastName)}</Text>
-          <Text style={[styles.email]} className="pt-2">{item.email}</Text>
+          <Text style={styles.name}>
+            {capitalizeFirstLetter(item.firstName)} {capitalizeFirstLetter(item.lastName)}
+          </Text>
+          <Text style={styles.email}>{item.email}</Text>
+          <Text style={styles.email}>Role: {item.role}</Text>
+          <Text style={styles.subText}>Mobile: {item.mobileNumber || 'N/A'}</Text>
+          <Text style={styles.subText}>Country: {item.country || 'N/A'}</Text>
+          <Text style={styles.subText}>City: {item.city || 'N/A'}</Text>
+          <Text style={styles.subText}>Address: {item.address || 'N/A'}</Text>
+          <Text style={styles.subText}>Mobile Number: {item.mobileNumber || 'N/A'}</Text>
+          <Text style={styles.subText}>Postal Code: {item.postalCode || 'N/A'}</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -79,35 +79,32 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   table: {
-    borderTopColor: "#ddd",
     paddingBottom: 10,
   },
   row: {
     flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    alignItems: "flex-start",
+    padding: 14,
     borderWidth: 0.5,
     borderColor: "#ddd",
     borderRadius: 8,
     backgroundColor: "#fff",
-    marginBottom: 10,
-    marginTop: 10,
+    marginVertical: 6,
     width: "100%",
-    justifyContent: "space-between",
   },
   evenRow: {
-    backgroundColor: "#ffff",
+    backgroundColor: "#f9f9f9",
   },
   oddRow: {
     backgroundColor: "#fff",
   },
   leftContainer: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
   },
   textContainer: {
     marginLeft: 10,
+    flex: 1,
   },
   name: {
     fontSize: 16,
@@ -117,13 +114,16 @@ const styles = StyleSheet.create({
   email: {
     fontSize: 14,
     color: "#666",
+    marginBottom: 4,
   },
-  createdAt: {
-    fontSize: 14,
-    color: "#999",
+  subText: {
+    fontSize: 13,
+    color: "#555",
+    marginBottom: 2,
   },
   icon: {
-    marginRight: 10,
+    marginRight: 8,
+    marginTop: 2,
   },
   noDataText: {
     textAlign: "center",

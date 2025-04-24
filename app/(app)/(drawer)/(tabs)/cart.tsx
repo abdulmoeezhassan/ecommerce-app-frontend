@@ -5,8 +5,9 @@ import NavigationHeader from '../../navigation-header';
 import { useCart } from '../../../../components/cartcontext';
 import { useRouter } from 'expo-router'; 
 
-// const IMAGE_BASE_URL = 'https://ecommerce-app-backend-indol.vercel.app'; // Base URL for images
-const IMAGE_BASE_URL='http://localhost:3000'
+const IMAGE_BASE_URL = 'https://ecommerce-app-backend-indol.vercel.app'; 
+// const IMAGE_BASE_URL='http://localhost:3000'
+
 const ShoppingCart = () => {
   const { cart, removeFromCart, increaseQuantity, decreaseQuantity, clearCart, getCartSupplierId } = useCart();
   const router = useRouter(); 

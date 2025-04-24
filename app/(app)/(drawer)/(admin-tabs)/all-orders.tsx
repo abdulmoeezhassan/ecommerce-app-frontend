@@ -1,4 +1,6 @@
 import { StyleSheet, Image, Platform, TouchableOpacity, FlatList, View, Text } from 'react-native';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -7,15 +9,23 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 
 const API_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app/api";
-// const API_BASE_URL = "http://localhost:3000/api";
+// const API_BASE_URL = "http://localhost:3000/api"
 // const IMAGE_BASE_URL = "http://localhost:3000/";
 const IMAGE_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app/";
 
-export default function HomeScreen() {
+export default function PastOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [imageErrors, setImageErrors] = useState({});
+  const [expandedOrders, setExpandedOrders] = useState({});
+
+  const toggleProductsView = (orderId) => {
+    setExpandedOrders(prev => ({
+      ...prev,
+      [orderId]: !prev[orderId]
+    }));
+  };
 
   const fetchOrders = async () => {
     setLoading(true); // Ensure loading state is set before fetching
@@ -41,7 +51,29 @@ export default function HomeScreen() {
       setLoading(false);
     }
   };
-
+  
+  const formatImageUrl = (imagePath) => {
+    if (!imagePath) {
+      return 'https://via.placeholder.com/150';
+    }
+    
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+    
+    // Replace backslashes with forward slashes
+    const normalizedPath = imagePath.replace(/\\/g, '/');
+    
+    const baseUrlWithoutTrailingSlash = IMAGE_BASE_URL.endsWith('/') 
+      ? IMAGE_BASE_URL.slice(0, -1) 
+      : IMAGE_BASE_URL;
+    
+    const pathWithoutLeadingSlash = normalizedPath.startsWith('/') 
+      ? normalizedPath.slice(1) 
+      : normalizedPath;
+    
+    return `${baseUrlWithoutTrailingSlash}/${pathWithoutLeadingSlash}`;
+  };
 
   useEffect(() => {
     fetchOrders();
@@ -71,156 +103,176 @@ export default function HomeScreen() {
     }
   };
 
-  const navigate = () => {
-    // router.push('/add-order');
-  };
-  const formatImageUrl = (imagePath) => {
-    if (!imagePath) {
-      return 'https://via.placeholder.com/150';
-    }
-    
-    if (imagePath.startsWith('http')) {
-      return imagePath;
-    }
-    
-    // Replace backslashes with forward slashes
-    const normalizedPath = imagePath.replace(/\\/g, '/');
-    
-    const baseUrlWithoutTrailingSlash = IMAGE_BASE_URL.endsWith('/') 
-      ? IMAGE_BASE_URL.slice(0, -1) 
-      : IMAGE_BASE_URL;
-    
-    const pathWithoutLeadingSlash = normalizedPath.startsWith('/') 
-      ? normalizedPath.slice(1) 
-      : normalizedPath;
-    
-    return `${baseUrlWithoutTrailingSlash}/${pathWithoutLeadingSlash}`;
-  };
+  const renderProductItem = ({ item, index }) => (
+    <View style={styles.productItem}>
+      <Image
+        source={
+          imageErrors[item._id] || !item.image
+            ? require("@/assets/images/product-placeholder.jpeg")
+            : { uri: formatImageUrl(item.image) }
+        }
+        style={styles.productThumbnail}
+        resizeMode="contain"
+        onError={() => {
+          setImageErrors(prev => ({ ...prev, [item._id]: true }));
+        }}
+      />
+      <View style={styles.productDetails}>
+        <ThemedText style={styles.productName}>{item.name}</ThemedText>
+        <ThemedText style={styles.productCategory}>{item.category}</ThemedText>
+        <View style={styles.productSpecs}>
+          <ThemedText style={styles.productSpec}>Size: {item.size?.toString().replace(/[\[\]"]/g, '')}</ThemedText>
+          <ThemedText style={styles.productSpec}>Color: {item.color?.toString().replace(/[\[\]"]/g, '')}</ThemedText>
+          <ThemedText style={styles.productPrice}>PKR {item.price}</ThemedText>
+        </View>
+      </View>
+    </View>
+  );
 
   const renderOrderCard = ({ item }) => (
-    <TouchableOpacity
-      style={styles.orderCard}
-    >
-      {item.products && item.products.map((product, index) => (
+    <View style={styles.orderCard}>
+      <View style={styles.cardHeader}>
         <Image
           source={
-            imageErrors[item._id] || !product.image
+            imageErrors[item._id] || !item.products?.[0]?.image
               ? require("@/assets/images/product-placeholder.jpeg")
-              : { uri: formatImageUrl(product.image) }
+              : { uri: formatImageUrl(item.products[0].image) }
           }
-          style={styles.productImage}
+          style={styles.headerImage}
           resizeMode="contain"
           onError={() => {
-            setImageErrors(prev => ({ ...prev, [product._id]: true }));
+            setImageErrors(prev => ({ ...prev, [item._id]: true }));
           }}
         />
-        // <Image
-        //   key={index}
-        //   source={{ uri: `${IMAGE_BASE_URL}${product.image}` }}
-        //   style={styles.productImage}
-        //   resizeMode="cover"
-        // />
-      ))}
+      </View>
+      
       <View style={styles.cardContent}>
         <View style={styles.orderHeader}>
-          <View style={styles.statusBadge}>
-            <Text style={styles.statusText}>{item.orderStatus}</Text>
+          <View style={styles.statusSection}>
+            <View style={styles.statusBadge}>
+              <ThemedText style={styles.statusText}>{item.orderStatus}</ThemedText>
+            </View>
+            <ThemedText style={styles.orderDate}>
+              {new Date(item.createdAt).toLocaleDateString()}
+            </ThemedText>
           </View>
-          <Text style={styles.orderDate}>
-            {new Date(item.createdAt).toLocaleDateString()}
-          </Text>
+          <TouchableOpacity 
+            style={styles.toggleButton}
+            onPress={() => toggleProductsView(item._id)}
+          >
+            <AntDesign 
+              name={expandedOrders[item._id] ? "up" : "down"} 
+              size={16} 
+              color="#007bff" 
+            />
+            <ThemedText style={styles.toggleText}>
+              {expandedOrders[item._id] ? "Hide Products" : "Show Products"}
+            </ThemedText>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.orderInfo}>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Order ID:</Text>
-            <Text style={styles.infoValue}>#{item._id.substring(0, 8)}</Text>
+            <ThemedText style={styles.infoLabel}>Order ID:</ThemedText>
+            <ThemedText style={styles.infoValue}>#{item._id.substring(0, 8)}</ThemedText>
           </View>
 
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Total Amount:</Text>
-            <Text style={styles.infoValue}>PKR {item.totalAmount.toFixed(2)}</Text>
+            <ThemedText style={styles.infoLabel}>Total Amount:</ThemedText>
+            <ThemedText style={styles.infoValue}>PKR {item.totalAmount.toFixed(2)}</ThemedText>
           </View>
 
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Payment:</Text>
+            <ThemedText style={styles.infoLabel}>Payment:</ThemedText>
             <View style={[styles.paymentBadge,
             item.paymentStatus === "Paid" ? styles.paidBadge : styles.pendingBadge]}>
-              <Text style={styles.paymentText}>{item.paymentStatus}</Text>
+              <ThemedText style={styles.paymentText}>{item.paymentStatus}</ThemedText>
             </View>
           </View>
 
+          {expandedOrders[item._id] && item.products && item.products.length > 0 && (
+            <View style={styles.productsContainer}>
+              <ThemedText style={styles.sectionTitle}>Order Products</ThemedText>
+              <FlatList
+                data={item.products}
+                renderItem={renderProductItem}
+                keyExtractor={(product) => product._id}
+                scrollEnabled={false}
+              />
+            </View>
+          )}
+
           {item?.user && (
             <View style={styles.customerInfo}>
-              <Text style={styles.sectionTitle}>Customer Information</Text>
+              <ThemedText style={styles.sectionTitle}>Customer Information</ThemedText>
 
               {item?.user?.email && (
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Email:</Text>
-                  <Text style={styles.infoValue}>{item.user.email}</Text>
+                  <ThemedText style={styles.infoLabel}>Email:</ThemedText>
+                  <ThemedText style={styles.infoValue}>{item.user.email}</ThemedText>
                 </View>
               )}
 
               {item?.user?.address && (
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Address:</Text>
-                  <Text style={styles.infoValue}>{item.user.address}</Text>
+                  <ThemedText style={styles.infoLabel}>Address:</ThemedText>
+                  <ThemedText style={styles.infoValue}>{item.user.address}</ThemedText>
                 </View>
               )}
 
               {item?.user?.country && (
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Country:</Text>
-                  <Text style={styles.infoValue}>{item.user.country}</Text>
+                  <ThemedText style={styles.infoLabel}>Country:</ThemedText>
+                  <ThemedText style={styles.infoValue}>{item.user.country}</ThemedText>
                 </View>
               )}
 
               {item?.user?.city && (
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>City:</Text>
-                  <Text style={styles.infoValue}>{item.user.city}</Text>
+                  <ThemedText style={styles.infoLabel}>City:</ThemedText>
+                  <ThemedText style={styles.infoValue}>{item.user.city}</ThemedText>
                 </View>
               )}
 
               {item?.user?.postalCode && (
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Post Code:</Text>
-                  <Text style={styles.infoValue}>{item.user.postalCode}</Text>
+                  <ThemedText style={styles.infoLabel}>Post Code:</ThemedText>
+                  <ThemedText style={styles.infoValue}>{item.user.postalCode}</ThemedText>
                 </View>
               )}
             </View>
           )}
         </View>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>All Orders</Text>
+        <ThemedText style={styles.title}>All Orders</ThemedText>
       </View>
 
       {loading && (
         <View style={styles.centeredContent}>
-          <Text style={styles.loadingText}>Loading orders...</Text>
+          <ThemedText>Loading orders...</ThemedText>
         </View>
       )}
 
       {error && (
         <View style={styles.centeredContent}>
           <AntDesign name="exclamationcircle" size={24} color="red" />
-          <Text style={styles.errorText}>{error}</Text>
+          <ThemedText style={styles.errorText}>{error}</ThemedText>
         </View>
       )}
 
       {!loading && !error && orders.length === 0 && (
         <View style={styles.centeredContent}>
           <AntDesign name="inbox" size={48} color="#888" />
-          <Text style={styles.emptyText}>No orders found</Text>
-          <Text style={styles.emptySubText}>
+          <ThemedText style={styles.emptyText}>No orders found</ThemedText>
+          <ThemedText style={styles.emptySubText}>
             Your orders will appear here once customers place them
-          </Text>
+          </ThemedText>
         </View>
       )}
 
@@ -246,7 +298,6 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: 'white',
     marginTop: 12,
   },
   actionButton: {
@@ -267,33 +318,32 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
+  cardHeader: {
+    height: 120,
+    overflow: 'hidden',
+  },
+  headerImage: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#f9f9f9',
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: 'white'
-  },
-  productImage: {
-    width: '100%',
-    height: 180,
-    backgroundColor: '#f9f9f9',
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: 'black'
+    color: 'black',
   },
   centeredContent: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: 'white'
-  },
-  loadingText: {
-    color: 'black',
-    fontSize: 16,
+    backgroundColor: 'white',
   },
   errorText: {
     color: 'red',
@@ -304,17 +354,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginTop: 16,
-    color: 'black'
+    color: '#666',
   },
   emptySubText: {
     fontSize: 14,
-    color: 'black',
+    color: '#666',
     marginTop: 8,
     textAlign: 'center',
   },
   orderList: {
     padding: 12,
-    backgroundColor: 'white'
   },
   orderCard: {
     marginBottom: 16,
@@ -329,14 +378,17 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     padding: 16,
-    backgroundColor: 'white'
+    backgroundColor: 'white',
   },
   orderHeader: {
+    marginBottom: 12,
+    backgroundColor: 'white',
+  },
+  statusSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
-    backgroundColor: 'white'
+    marginBottom: 8,
   },
   statusBadge: {
     backgroundColor: '#007bff',
@@ -345,35 +397,52 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   statusText: {
-    color: 'white',
+    color: '#fff',
     fontSize: 12,
     fontWeight: 'bold',
   },
   orderDate: {
     fontSize: 14,
-    color: 'black',
+    color: '#666',
+  },
+  toggleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 4,
+    marginTop: 4,
+  },
+  toggleText: {
+    fontSize: 12,
+    color: '#007bff',
+    marginLeft: 4,
+    fontWeight: '500',
   },
   orderInfo: {
     borderTopWidth: 1,
     borderTopColor: '#eee',
     paddingTop: 12,
-    backgroundColor: 'white'
+    backgroundColor: 'white',
   },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
-    backgroundColor: 'white'
+    backgroundColor: 'white',
   },
   infoLabel: {
     fontSize: 14,
-    color: 'black',
+    color: '#666',
   },
   infoValue: {
     fontSize: 14,
     fontWeight: '500',
-    color: 'black'
+    color: 'black',
   },
   paymentBadge: {
     paddingVertical: 2,
@@ -387,21 +456,70 @@ const styles = StyleSheet.create({
     backgroundColor: '#ff9800',
   },
   paymentText: {
-    color: 'white',
+    color: '#fff',
     fontSize: 12,
     fontWeight: '500',
+  },
+  productsContainer: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  productItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    marginBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  productThumbnail: {
+    width: 60,
+    height: 60,
+    borderRadius: 6,
+    backgroundColor: '#f5f5f5',
+  },
+  productDetails: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  productName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  productCategory: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 4,
+  },
+  productSpecs: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+  },
+  productSpec: {
+    fontSize: 12,
+    color: '#666',
+    marginRight: 12,
+  },
+  productPrice: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#007bff',
   },
   customerInfo: {
     borderTopWidth: 1,
     borderTopColor: '#eee',
     marginTop: 12,
     paddingTop: 12,
-    backgroundColor: 'white'
+    backgroundColor: 'white',
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 8,
-    color: 'black'
+    color: 'black',
   },
 });

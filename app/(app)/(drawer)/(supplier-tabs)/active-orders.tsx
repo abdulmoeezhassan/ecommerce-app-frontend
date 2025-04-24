@@ -17,6 +17,14 @@ export default function TabTwoScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [imageErrors, setImageErrors] = useState({});
+  const [expandedOrders, setExpandedOrders] = useState({});
+
+  const toggleProductsView = (orderId) => {
+    setExpandedOrders(prev => ({
+      ...prev,
+      [orderId]: !prev[orderId]
+    }));
+  };
 
   const fetchOrders = async () => {
     setLoading(true); // Ensure loading state is set before fetching
@@ -94,42 +102,96 @@ export default function TabTwoScreen() {
     }
   };
 
-  const navigate = () => {
-    // router.push('/add-order');
+  const updatePaymentStatus = async (orderId, newStatus) => {
+    try {
+      const response = await axios.put(`${API_BASE_URL}/orders/update-payment-status/${orderId}`, {
+        paymentStatus: newStatus,
+      });
+
+      if (response.status === 200) {
+        setOrders((prevOrders) =>
+          prevOrders.map((order) =>
+            order._id === orderId ? { ...order, orderStatus: newStatus } : order
+          )
+        );
+        Toast.show({
+          type: "success",
+          text1: "Paymnet Status updated successfully",
+          text2: response?.data?.message || "Error in updating payment status",
+        });
+        fetchOrders();
+      }
+    } catch (error) {
+      console.error("Error updating payment status:", error);
+    }
   };
 
+  const renderProductItem = ({ item, index }) => (
+    <View style={styles.productItem}>
+      <Image
+        source={
+          imageErrors[item._id] || !item.image
+            ? require("@/assets/images/product-placeholder.jpeg")
+            : { uri: formatImageUrl(item.image) }
+        }
+        style={styles.productThumbnail}
+        resizeMode="cover"
+        onError={() => {
+          setImageErrors(prev => ({ ...prev, [item._id]: true }));
+        }}
+      />
+      <View style={styles.productDetails}>
+        <Text style={styles.productName}>{item.name}</Text>
+        <Text style={styles.productCategory}>{item.category}</Text>
+        <View style={styles.productSpecs}>
+          <Text style={styles.productSpec}>Size: {item.size?.toString().replace(/[\[\]"]/g, '')}</Text>
+          <Text style={styles.productSpec}>Color: {item.color?.toString().replace(/[\[\]"]/g, '')}</Text>
+          <Text style={styles.productPrice}>PKR {item.price}</Text>
+        </View>
+      </View>
+    </View>
+  );
+
   const renderOrderCard = ({ item }) => (
-    <TouchableOpacity
-      style={styles.orderCard}
-    >
-            {item.products && item.products.map((product, index) => (
-              <Image
-                source={
-                  imageErrors[item._id] || !product.image
-                    ? require("@/assets/images/product-placeholder.jpeg")
-                    : { uri: formatImageUrl(product.image) }
-                }
-                style={styles.productImage}
-                resizeMode="contain"
-                onError={() => {
-                  setImageErrors(prev => ({ ...prev, [product._id]: true }));
-                }}
-              />
-              // <Image
-              //   key={index}
-              //   source={{ uri: `${IMAGE_BASE_URL}${product.image}` }}
-              //   style={styles.productImage}
-              //   resizeMode="cover"
-              // />
-            ))}
+    <View style={styles.orderCard}>
+      <View style={styles.cardHeader}>
+        <Image
+          source={
+            imageErrors[item._id] || !item.products?.[0]?.image
+              ? require("@/assets/images/product-placeholder.jpeg")
+              : { uri: formatImageUrl(item.products[0].image) }
+          }
+          style={styles.headerImage}
+          resizeMode="contain"
+          onError={() => {
+            setImageErrors(prev => ({ ...prev, [item._id]: true }));
+          }}
+        />
+      </View>
+
       <View style={styles.cardContent}>
         <View style={styles.orderHeader}>
-          <View style={styles.statusBadge}>
-            <Text style={styles.statusText}>{item.orderStatus}</Text>
+          <View style={styles.statusSection}>
+            <View style={styles.statusBadge}>
+              <Text style={styles.statusText}>{item.orderStatus}</Text>
+            </View>
+            <Text style={styles.orderDate}>
+              {new Date(item.createdAt).toLocaleDateString()}
+            </Text>
           </View>
-          <Text style={styles.orderDate}>
-            {new Date(item.createdAt).toLocaleDateString()}
-          </Text>
+          <TouchableOpacity 
+            style={styles.toggleButton}
+            onPress={() => toggleProductsView(item._id)}
+          >
+            <AntDesign 
+              name={expandedOrders[item._id] ? "up" : "down"} 
+              size={16} 
+              color="#007bff" 
+            />
+            <Text style={styles.toggleText}>
+              {expandedOrders[item._id] ? "Hide Products" : "Show Products"}
+            </Text>
+          </TouchableOpacity>
         </View>
   
         <View style={styles.orderInfo}>
@@ -150,47 +212,59 @@ export default function TabTwoScreen() {
               <Text style={styles.paymentText}>{item.paymentStatus}</Text>
             </View>
           </View>
+
+          {expandedOrders[item._id] && item.products && item.products.length > 0 && (
+            <View style={styles.productsContainer}>
+              <Text style={styles.sectionTitle}>Order Products</Text>
+              <FlatList
+                data={item.products}
+                renderItem={renderProductItem}
+                keyExtractor={(product) => product._id}
+                scrollEnabled={false}
+              />
+            </View>
+          )}
   
-      {item?.user && (
-               <View style={styles.customerInfo}>
-                 <Text style={styles.sectionTitle}>Customer Information</Text>
-   
-                 {item?.user?.email && (
-                   <View style={styles.infoRow}>
-                     <Text style={styles.infoLabel}>Email:</Text>
-                     <Text style={styles.infoValue}>{item.user.email}</Text>
-                   </View>
-                 )}
-   
-                 {item?.user?.address && (
-                   <View style={styles.infoRow}>
-                     <Text style={styles.infoLabel}>Address:</Text>
-                     <Text style={styles.infoValue}>{item.user.address}</Text>
-                   </View>
-                 )}
-   
-                 {item?.user?.country && (
-                   <View style={styles.infoRow}>
-                     <Text style={styles.infoLabel}>Country:</Text>
-                     <Text style={styles.infoValue}>{item.user.country}</Text>
-                   </View>
-                 )}
-   
-                 {item?.user?.city && (
-                   <View style={styles.infoRow}>
-                     <Text style={styles.infoLabel}>City:</Text>
-                     <Text style={styles.infoValue}>{item.user.city}</Text>
-                   </View>
-                 )}
-   
-                 {item?.user?.postalCode && (
-                   <View style={styles.infoRow}>
-                     <Text style={styles.infoLabel}>Post Code:</Text>
-                     <Text style={styles.infoValue}>{item.user.postalCode}</Text>
-                   </View>
-                 )}
-               </View>
-             )}
+          {item?.user && (
+            <View style={styles.customerInfo}>
+              <Text style={styles.sectionTitle}>Customer Information</Text>
+  
+              {item?.user?.email && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Email:</Text>
+                  <Text style={styles.infoValue}>{item.user.email}</Text>
+                </View>
+              )}
+  
+              {item?.user?.address && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Address:</Text>
+                  <Text style={styles.infoValue}>{item.user.address}</Text>
+                </View>
+              )}
+  
+              {item?.user?.country && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Country:</Text>
+                  <Text style={styles.infoValue}>{item.user.country}</Text>
+                </View>
+              )}
+  
+              {item?.user?.city && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>City:</Text>
+                  <Text style={styles.infoValue}>{item.user.city}</Text>
+                </View>
+              )}
+  
+              {item?.user?.postalCode && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Post Code:</Text>
+                  <Text style={styles.infoValue}>{item.user.postalCode}</Text>
+                </View>
+              )}
+            </View>
+          )}
   
           <View style={styles.buttonContainer}>
             <TouchableOpacity
@@ -206,9 +280,25 @@ export default function TabTwoScreen() {
               <Text style={styles.buttonText}>Reject</Text>
             </TouchableOpacity>
           </View>
+          {item.paymentStatus === "Pending" && (
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.cancelButton]}
+              onPress={() => updatePaymentStatus(item._id, "Paid")}
+            >
+              <Text style={styles.buttonText}>Paid</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.rejectButton]}
+              onPress={() => updatePaymentStatus(item._id, "Failed")}
+            >
+              <Text style={styles.buttonText}>Failed</Text>
+            </TouchableOpacity>
+          </View>
+          )}
         </View>
       </View>
-    </TouchableOpacity>
+    </View>
   );
   
   return (
@@ -282,9 +372,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
-  productImage: {
+  cardHeader: {
+    height: 120,
+    overflow: 'hidden',
+  },
+  headerImage: {
     width: '100%',
-    height: 180,
+    height: '100%',
     backgroundColor: '#f9f9f9',
   },
   header: {
@@ -297,14 +391,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: 'black'
+    color: 'black',
   },
   centeredContent: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: 'white'
+    backgroundColor: 'white',
   },
   loadingText: {
     color: 'black',
@@ -347,11 +441,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
   },
   orderHeader: {
+    marginBottom: 12,
+    backgroundColor: 'white',
+  },
+  statusSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
-    backgroundColor: 'white',
+    marginBottom: 8,
   },
   statusBadge: {
     backgroundColor: '#007bff',
@@ -367,6 +464,23 @@ const styles = StyleSheet.create({
   orderDate: {
     fontSize: 14,
     color: 'black',
+  },
+  toggleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 4,
+    marginTop: 4,
+  },
+  toggleText: {
+    fontSize: 12,
+    color: '#007bff',
+    marginLeft: 4,
+    fontWeight: '500',
   },
   orderInfo: {
     borderTopWidth: 1,
@@ -405,6 +519,55 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 12,
     fontWeight: '500',
+  },
+  productsContainer: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  productItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    marginBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  productThumbnail: {
+    width: 60,
+    height: 60,
+    borderRadius: 6,
+    backgroundColor: '#f5f5f5',
+  },
+  productDetails: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  productName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  productCategory: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 4,
+  },
+  productSpecs: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+  },
+  productSpec: {
+    fontSize: 12,
+    color: '#666',
+    marginRight: 12,
+  },
+  productPrice: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#007bff',
   },
   customerInfo: {
     borderTopWidth: 1,

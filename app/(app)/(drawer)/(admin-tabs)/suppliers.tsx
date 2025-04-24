@@ -101,34 +101,27 @@ const Suppliers = () => {
   const renderItem = ({ item, index }) => (
     <TouchableOpacity
       style={[styles.row, index % 2 === 0 ? styles.evenRow : styles.oddRow]}
-      onPress={() => handleViewDetails(item)}
+      onPress={() => console.log("View Details", item)}
     >
       <View style={styles.leftContainer}>
         <Icon name="user" size={40} color="#555" style={styles.icon} />
         <View style={styles.textContainer}>
-          <Text style={[styles.name]}>{capitalizeFirstLetter(item.firstName)} {capitalizeFirstLetter(item.lastName)}</Text>
-          <Text style={[styles.email]} className="pt-2">{item.email}</Text>
+          <Text style={styles.name}>
+            {capitalizeFirstLetter(item.firstName)} {capitalizeFirstLetter(item.lastName)}
+          </Text>
+               <Text style={styles.email}>{item.email}</Text>
+                    <Text style={styles.email}>Role: {item.role}</Text>
+                    <Text style={styles.subText}>Mobile: {item.mobileNumber || 'N/A'}</Text>
+                    <Text style={styles.subText}>Country: {item.country || 'N/A'}</Text>
+                    <Text style={styles.subText}>City: {item.city || 'N/A'}</Text>
+                    <Text style={styles.subText}>Address: {item.address || 'N/A'}</Text>
+                    <Text style={styles.subText}>Mobile Number: {item.mobileNumber || 'N/A'}</Text>
+                    <Text style={styles.subText}>Postal Code: {item.postalCode || 'N/A'}</Text>
         </View>
       </View>
-      
-      {item.isAccountActive === false && (
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity 
-            style={styles.approveButton}
-            onPress={() => handleApprove(item._id)}
-          >
-            <Text style={styles.buttonText}>Approve</Text>
-          </TouchableOpacity>
-          {/* <TouchableOpacity 
-            style={styles.rejectButton}
-            onPress={() => handleReject(item._id)}
-          >
-            <Text style={styles.buttonText}>Reject</Text>
-          </TouchableOpacity> */}
-        </View>
-      )}
     </TouchableOpacity>
   );
+  
 
   return (
     <View style={styles.container}>
@@ -144,6 +137,11 @@ const Suppliers = () => {
 };
 
 const styles = StyleSheet.create({
+  subText: {
+    fontSize: 13,
+    color: "#555",
+    marginBottom: 2,
+  },
   container: {
     flex: 1,
     paddingHorizontal: 14,
@@ -176,7 +174,7 @@ const styles = StyleSheet.create({
   },
   leftContainer: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
   },
   textContainer: {
     marginLeft: 10,
@@ -223,6 +221,59 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
   },
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  
+  cardTitleContainer: {
+    marginLeft: 12,
+  },
+  
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  
+  cardSubtitle: {
+    fontSize: 14,
+    color: "#666",
+  },
+  
+  cardBody: {
+    marginTop: 8,
+  },
+  
+  cardDetail: {
+    fontSize: 14,
+    color: "#444",
+    marginBottom: 4,
+  },
+  
+  cardFooter: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginTop: 12,
+  },
+  
+  bold: {
+    fontWeight: "600",
+  },
+  
 });
 
 export default Suppliers;

@@ -12,12 +12,20 @@ const API_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app/api";
 // const API_BASE_URL = "http://localhost:3000/api"
 // const IMAGE_BASE_URL = "http://localhost:3000/";
 const IMAGE_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app/";
-const [imageErrors, setImageErrors] = useState({});
 
 export default function PastOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [imageErrors, setImageErrors] = useState({});
+  const [expandedOrders, setExpandedOrders] = useState({});
+
+  const toggleProductsView = (orderId) => {
+    setExpandedOrders(prev => ({
+      ...prev,
+      [orderId]: !prev[orderId]
+    }));
+  };
 
   const fetchOrders = async () => {
     setLoading(true); // Ensure loading state is set before fetching
@@ -43,6 +51,7 @@ export default function PastOrders() {
       setLoading(false);
     }
   };
+  
   const formatImageUrl = (imagePath) => {
     if (!imagePath) {
       return 'https://via.placeholder.com/150';
@@ -94,42 +103,72 @@ export default function PastOrders() {
     }
   };
 
-  const navigate = () => {
-    // router.push('/add-order');
-  };
+  const renderProductItem = ({ item, index }) => (
+    <View style={styles.productItem}>
+      <Image
+        source={
+          imageErrors[item._id] || !item.image
+            ? require("@/assets/images/product-placeholder.jpeg")
+            : { uri: formatImageUrl(item.image) }
+        }
+        style={styles.productThumbnail}
+        resizeMode="contain"
+        onError={() => {
+          setImageErrors(prev => ({ ...prev, [item._id]: true }));
+        }}
+      />
+      <View style={styles.productDetails}>
+        <ThemedText style={styles.productName}>{item.name}</ThemedText>
+        <ThemedText style={styles.productCategory}>{item.category}</ThemedText>
+        <View style={styles.productSpecs}>
+          <ThemedText style={styles.productSpec}>Size: {item.size?.toString().replace(/[\[\]"]/g, '')}</ThemedText>
+          <ThemedText style={styles.productSpec}>Color: {item.color?.toString().replace(/[\[\]"]/g, '')}</ThemedText>
+          <ThemedText style={styles.productPrice}>PKR {item.price}</ThemedText>
+        </View>
+      </View>
+    </View>
+  );
 
   const renderOrderCard = ({ item }) => (
-    <TouchableOpacity
-      style={styles.orderCard}
-    >
-      {item.products && item.products.map((product, index) => (
+    <View style={styles.orderCard}>
+      <View style={styles.cardHeader}>
         <Image
           source={
-            imageErrors[item._id] || !product.image
+            imageErrors[item._id] || !item.products?.[0]?.image
               ? require("@/assets/images/product-placeholder.jpeg")
-              : { uri: formatImageUrl(product.image) }
+              : { uri: formatImageUrl(item.products[0].image) }
           }
-          style={styles.productImage}
+          style={styles.headerImage}
           resizeMode="contain"
           onError={() => {
-            setImageErrors(prev => ({ ...prev, [product._id]: true }));
+            setImageErrors(prev => ({ ...prev, [item._id]: true }));
           }}
         />
-        // <Image
-        //   key={index}
-        //   source={{ uri: `${IMAGE_BASE_URL}${product.image}` }}
-        //   style={styles.productImage}
-        //   resizeMode="cover"
-        // />
-      ))}
+      </View>
+      
       <View style={styles.cardContent}>
         <View style={styles.orderHeader}>
-          <View style={styles.statusBadge}>
-            <ThemedText style={styles.statusText}>{item.orderStatus}</ThemedText>
+          <View style={styles.statusSection}>
+            <View style={styles.statusBadge}>
+              <ThemedText style={styles.statusText}>{item.orderStatus}</ThemedText>
+            </View>
+            <ThemedText style={styles.orderDate}>
+              {new Date(item.createdAt).toLocaleDateString()}
+            </ThemedText>
           </View>
-          <ThemedText style={styles.orderDate}>
-            {new Date(item.createdAt).toLocaleDateString()}
-          </ThemedText>
+          <TouchableOpacity 
+            style={styles.toggleButton}
+            onPress={() => toggleProductsView(item._id)}
+          >
+            <AntDesign 
+              name={expandedOrders[item._id] ? "up" : "down"} 
+              size={16} 
+              color="#007bff" 
+            />
+            <ThemedText style={styles.toggleText}>
+              {expandedOrders[item._id] ? "Hide Products" : "Show Products"}
+            </ThemedText>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.orderInfo}>
@@ -151,49 +190,61 @@ export default function PastOrders() {
             </View>
           </View>
 
+          {expandedOrders[item._id] && item.products && item.products.length > 0 && (
+            <View style={styles.productsContainer}>
+              <ThemedText style={styles.sectionTitle}>Order Products</ThemedText>
+              <FlatList
+                data={item.products}
+                renderItem={renderProductItem}
+                keyExtractor={(product) => product._id}
+                scrollEnabled={false}
+              />
+            </View>
+          )}
+
           {item?.user && (
             <View style={styles.customerInfo}>
-              <Text style={styles.sectionTitle}>Customer Information</Text>
+              <ThemedText style={styles.sectionTitle}>Customer Information</ThemedText>
 
               {item?.user?.email && (
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Email:</Text>
-                  <Text style={styles.infoValue}>{item.user.email}</Text>
+                  <ThemedText style={styles.infoLabel}>Email:</ThemedText>
+                  <ThemedText style={styles.infoValue}>{item.user.email}</ThemedText>
                 </View>
               )}
 
               {item?.user?.address && (
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Address:</Text>
-                  <Text style={styles.infoValue}>{item.user.address}</Text>
+                  <ThemedText style={styles.infoLabel}>Address:</ThemedText>
+                  <ThemedText style={styles.infoValue}>{item.user.address}</ThemedText>
                 </View>
               )}
 
               {item?.user?.country && (
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Country:</Text>
-                  <Text style={styles.infoValue}>{item.user.country}</Text>
+                  <ThemedText style={styles.infoLabel}>Country:</ThemedText>
+                  <ThemedText style={styles.infoValue}>{item.user.country}</ThemedText>
                 </View>
               )}
 
               {item?.user?.city && (
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>City:</Text>
-                  <Text style={styles.infoValue}>{item.user.city}</Text>
+                  <ThemedText style={styles.infoLabel}>City:</ThemedText>
+                  <ThemedText style={styles.infoValue}>{item.user.city}</ThemedText>
                 </View>
               )}
 
               {item?.user?.postalCode && (
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Post Code:</Text>
-                  <Text style={styles.infoValue}>{item.user.postalCode}</Text>
+                  <ThemedText style={styles.infoLabel}>Post Code:</ThemedText>
+                  <ThemedText style={styles.infoValue}>{item.user.postalCode}</ThemedText>
                 </View>
               )}
             </View>
           )}
         </View>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 
   return (
@@ -267,9 +318,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
-  productImage: {
+  cardHeader: {
+    height: 120,
+    overflow: 'hidden',
+  },
+  headerImage: {
     width: '100%',
-    height: 180,
+    height: '100%',
     backgroundColor: '#f9f9f9',
   },
   header: {
@@ -281,14 +336,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: 'black'
+    color: 'black',
   },
   centeredContent: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: 'white'
+    backgroundColor: 'white',
   },
   errorText: {
     color: 'red',
@@ -313,7 +368,7 @@ const styles = StyleSheet.create({
   orderCard: {
     marginBottom: 16,
     borderRadius: 12,
-    backgroundColor: 'white', // Explicitly set to white
+    backgroundColor: 'white',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -323,14 +378,17 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     padding: 16,
-    backgroundColor: 'white', // Explicitly set to white
+    backgroundColor: 'white',
   },
   orderHeader: {
+    marginBottom: 12,
+    backgroundColor: 'white',
+  },
+  statusSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
-    backgroundColor: 'white', // Explicitly set to white
+    marginBottom: 8,
   },
   statusBadge: {
     backgroundColor: '#007bff',
@@ -347,18 +405,35 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
   },
+  toggleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 4,
+    marginTop: 4,
+  },
+  toggleText: {
+    fontSize: 12,
+    color: '#007bff',
+    marginLeft: 4,
+    fontWeight: '500',
+  },
   orderInfo: {
     borderTopWidth: 1,
     borderTopColor: '#eee',
     paddingTop: 12,
-    backgroundColor: 'white', // Explicitly set to white
+    backgroundColor: 'white',
   },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
-    backgroundColor: 'white', // Explicitly set to white
+    backgroundColor: 'white',
   },
   infoLabel: {
     fontSize: 14,
@@ -366,8 +441,8 @@ const styles = StyleSheet.create({
   },
   infoValue: {
     fontSize: 14,
-    color: 'black',
     fontWeight: '500',
+    color: 'black',
   },
   paymentBadge: {
     paddingVertical: 2,
@@ -385,16 +460,66 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
   },
+  productsContainer: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  productItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    marginBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  productThumbnail: {
+    width: 60,
+    height: 60,
+    borderRadius: 6,
+    backgroundColor: '#f5f5f5',
+  },
+  productDetails: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  productName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  productCategory: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 4,
+  },
+  productSpecs: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+  },
+  productSpec: {
+    fontSize: 12,
+    color: '#666',
+    marginRight: 12,
+  },
+  productPrice: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#007bff',
+  },
   customerInfo: {
     borderTopWidth: 1,
     borderTopColor: '#eee',
     marginTop: 12,
     paddingTop: 12,
-    backgroundColor: 'white', // Explicitly set to white
+    backgroundColor: 'white',
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 8,
+    color: 'black',
   },
 });

@@ -4,8 +4,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import Icon from "react-native-vector-icons/FontAwesome";
+import Toast from "react-native-toast-message";
 
-const API_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app";
+// const API_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app";
+const API_BASE_URL = "http://localhost:3000"
 
 const Users = () => {
   const [userData, setUserData] = useState([]);
@@ -22,6 +24,44 @@ const Users = () => {
       setUserData(response.data?.data || []);
     } catch (error) {
       console.error("Failed to fetch users:", error);
+    }
+  };
+
+  const updateUserStatus = async (orderId, newStatus) => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/users/reject-user/${orderId}`, {
+        isAccountActive: newStatus,
+      });
+
+      if (response.status === 200) {
+        Toast.show({
+          type: "success",
+          text1: "User Status updated successfully",
+          text2: response?.data?.message || "Error in updating user status",
+        });
+        getAllUsers();
+      }
+    } catch (error) {
+      console.error("Error updating user status:", error);
+    }
+  };
+
+  const approveUser = async (orderId, newStatus) => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/users/approve-user/${orderId}`, {
+        isAccountActive: newStatus,
+      });
+
+      if (response.status === 200) {
+        Toast.show({
+          type: "success",
+          text1: "User Status updated successfully",
+          text2: response?.data?.message || "Error in updating user status",
+        });
+        getAllUsers();
+      }
+    } catch (error) {
+      console.error("Error updating user status:", error);
     }
   };
 
@@ -53,6 +93,22 @@ const Users = () => {
           <Text style={styles.subText}>Address: {item.address || 'N/A'}</Text>
           <Text style={styles.subText}>Mobile Number: {item.mobileNumber || 'N/A'}</Text>
           <Text style={styles.subText}>Postal Code: {item.postalCode || 'N/A'}</Text>
+          {item.isAccountActive === false && (
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.cancelButton]}
+                onPress={() => approveUser(item._id, true)}
+              >
+                <Text style={styles.buttonText}>Approve</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.rejectButton]}
+                onPress={() => updateUserStatus(item._id, false)}
+              >
+                <Text style={styles.buttonText}>Reject</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </View>
     </TouchableOpacity>
@@ -91,6 +147,30 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     marginVertical: 6,
     width: "100%",
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 12,
+  },
+  actionButton: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 6,
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+  cancelButton: {
+    backgroundColor: '#ff9800', // Orange for Cancel
+  },
+  rejectButton: {
+    backgroundColor: '#f44336', // Red for Reject
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   evenRow: {
     backgroundColor: "#f9f9f9",

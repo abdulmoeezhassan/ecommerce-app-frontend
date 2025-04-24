@@ -27,6 +27,44 @@ const Suppliers = () => {
     }
   };
 
+  const updateUserStatus = async (orderId, newStatus) => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/users/reject-user/${orderId}`, {
+        isAccountActive: newStatus,
+      });
+
+      if (response.status === 200) {
+        Toast.show({
+          type: "success",
+          text1: "User Status updated successfully",
+          text2: response?.data?.message || "Error in updating user status",
+        });
+        getAllOpportunities();
+      }
+    } catch (error) {
+      console.error("Error updating user status:", error);
+    }
+  };
+
+  const approveUser = async (orderId, newStatus) => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/users/approve-user/${orderId}`, {
+        isAccountActive: newStatus,
+      });
+
+      if (response.status === 200) {
+        Toast.show({
+          type: "success",
+          text1: "User Status updated successfully",
+          text2: response?.data?.message || "Error in updating user status",
+        });
+        getAllOpportunities();
+      }
+    } catch (error) {
+      console.error("Error updating user status:", error);
+    }
+  };
+
   useEffect(() => {
     getAllOpportunities();
   }, []);
@@ -116,7 +154,23 @@ const Suppliers = () => {
                     <Text style={styles.subText}>City: {item.city || 'N/A'}</Text>
                     <Text style={styles.subText}>Address: {item.address || 'N/A'}</Text>
                     <Text style={styles.subText}>Mobile Number: {item.mobileNumber || 'N/A'}</Text>
-                    <Text style={styles.subText}>Postal Code: {item.postalCode || 'N/A'}</Text>
+                    <Text style={styles.subText} className="mb-2">Postal Code: {item.postalCode || 'N/A'}</Text>
+                    {item.isAccountActive === false && (
+                                <View style={styles.buttonContainer}>
+                                  <TouchableOpacity
+                                    style={[styles.actionButton, styles.cancelButton]}
+                                    onPress={() => approveUser(item._id, true)}
+                                  >
+                                    <Text style={styles.buttonText}>Approve</Text>
+                                  </TouchableOpacity>
+                                  <TouchableOpacity
+                                    style={[styles.actionButton, styles.rejectButton]}
+                                    onPress={() => updateUserStatus(item._id, false)}
+                                  >
+                                    <Text style={styles.buttonText}>Reject</Text>
+                                  </TouchableOpacity>
+                                </View>
+                              )}
         </View>
       </View>
     </TouchableOpacity>
@@ -192,6 +246,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#999",
   },
+  actionButton: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 6,
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+  cancelButton: {
+    backgroundColor: '#ff9800', // Orange for Cancel
+  },
+  rejectButton: {
+    backgroundColor: '#f44336', // Red for Reject
+  },
   icon: {
     marginRight: 10,
   },
@@ -210,12 +278,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 4,
     marginRight: 8,
-  },
-  rejectButton: {
-    backgroundColor: "#F44336",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 4,
   },
   buttonText: {
     color: "white",

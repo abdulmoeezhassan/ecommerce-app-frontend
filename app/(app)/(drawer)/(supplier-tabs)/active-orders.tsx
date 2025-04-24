@@ -6,11 +6,11 @@ import { AntDesign } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 
-const API_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app/api";
-// const API_BASE_URL = "http://localhost:3000/api"
+// const API_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app/api";
+const API_BASE_URL = "http://localhost:3000/api"
 
-// const IMAGE_BASE_URL = "http://localhost:3000/";
-const IMAGE_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app/";
+const IMAGE_BASE_URL = "http://localhost:3000/";
+// const IMAGE_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app/";
 
 export default function TabTwoScreen() {
   const [orders, setOrders] = useState([]);
@@ -55,22 +55,22 @@ export default function TabTwoScreen() {
     if (!imagePath) {
       return 'https://via.placeholder.com/150';
     }
-    
+
     if (imagePath.startsWith('http')) {
       return imagePath;
     }
-    
+
     // Replace backslashes with forward slashes
     const normalizedPath = imagePath.replace(/\\/g, '/');
-    
-    const baseUrlWithoutTrailingSlash = IMAGE_BASE_URL.endsWith('/') 
-      ? IMAGE_BASE_URL.slice(0, -1) 
+
+    const baseUrlWithoutTrailingSlash = IMAGE_BASE_URL.endsWith('/')
+      ? IMAGE_BASE_URL.slice(0, -1)
       : IMAGE_BASE_URL;
-    
-    const pathWithoutLeadingSlash = normalizedPath.startsWith('/') 
-      ? normalizedPath.slice(1) 
+
+    const pathWithoutLeadingSlash = normalizedPath.startsWith('/')
+      ? normalizedPath.slice(1)
       : normalizedPath;
-    
+
     return `${baseUrlWithoutTrailingSlash}/${pathWithoutLeadingSlash}`;
   };
 
@@ -130,9 +130,9 @@ export default function TabTwoScreen() {
     <View style={styles.productItem}>
       <Image
         source={
-          imageErrors[item._id] || !item.image
+          imageErrors[item._id] || !item.productImage
             ? require("@/assets/images/product-placeholder.jpeg")
-            : { uri: formatImageUrl(item.image) }
+            : { uri: item.productImage }
         }
         style={styles.productThumbnail}
         resizeMode="cover"
@@ -141,25 +141,51 @@ export default function TabTwoScreen() {
         }}
       />
       <View style={styles.productDetails}>
-        <Text style={styles.productName}>{item.name}</Text>
-        <Text style={styles.productCategory}>{item.category}</Text>
+        <Text style={styles.productName}>Product #{item.productId.substring(0, 8)}</Text>
+        <Text style={styles.productCategory}>Quantity: {item.quantity}</Text>
         <View style={styles.productSpecs}>
-          <Text style={styles.productSpec}>Size: {item.size?.toString().replace(/[\[\]"]/g, '')}</Text>
-          <Text style={styles.productSpec}>Color: {item.color?.toString().replace(/[\[\]"]/g, '')}</Text>
+          <Text style={styles.productSpec}>
+            Size: {item.size}
+          </Text>
+          <Text style={styles.productSpec}>
+            Color: {item.color}
+          </Text>
+          <Text style={styles.productSpec}>
+            Quality: {item.quality}
+          </Text>
           <Text style={styles.productPrice}>PKR {item.price}</Text>
         </View>
+        {/* Custom Design Section */}
+        {item.customDesignPath && (
+          <>
+            <Text style={styles.customDesignLabel}>Custom Design:</Text>
+            <Image
+              source={{ uri: `data:image/jpeg;base64,${item.customDesignPath}` }}
+              style={styles.customDesignImage}
+              resizeMode="contain"
+            />
+          </>
+        )}
+
+        {item.description && (
+          <>
+            <Text style={styles.customDesignLabel}>Design Description:</Text>
+            <Text style={styles.customDesignDescription}>{item.description}</Text>
+          </>
+        )}
       </View>
     </View>
   );
+
 
   const renderOrderCard = ({ item }) => (
     <View style={styles.orderCard}>
       <View style={styles.cardHeader}>
         <Image
           source={
-            imageErrors[item._id] || !item.products?.[0]?.image
+            imageErrors[item._id] || !item.cart?.products?.[0]?.productImage
               ? require("@/assets/images/product-placeholder.jpeg")
-              : { uri: formatImageUrl(item.products[0].image) }
+              : { uri: item.cart.products[0].productImage }
           }
           style={styles.headerImage}
           resizeMode="contain"
@@ -179,84 +205,84 @@ export default function TabTwoScreen() {
               {new Date(item.createdAt).toLocaleDateString()}
             </Text>
           </View>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.toggleButton}
             onPress={() => toggleProductsView(item._id)}
           >
-            <AntDesign 
-              name={expandedOrders[item._id] ? "up" : "down"} 
-              size={16} 
-              color="#007bff" 
+            <AntDesign
+              name={expandedOrders[item._id] ? "up" : "down"}
+              size={16}
+              color="#007bff"
             />
             <Text style={styles.toggleText}>
               {expandedOrders[item._id] ? "Hide Products" : "Show Products"}
             </Text>
           </TouchableOpacity>
         </View>
-  
+
         <View style={styles.orderInfo}>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Order ID:</Text>
             <Text style={styles.infoValue}>#{item._id.substring(0, 8)}</Text>
           </View>
-  
+
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Total Amount:</Text>
             <Text style={styles.infoValue}>PKR {item.totalAmount.toFixed(2)}</Text>
           </View>
-  
+
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Payment:</Text>
             <View style={[styles.paymentBadge,
-              item.paymentStatus === "Paid" ? styles.paidBadge : styles.pendingBadge]}>
+            item.paymentStatus === "Paid" ? styles.paidBadge : styles.pendingBadge]}>
               <Text style={styles.paymentText}>{item.paymentStatus}</Text>
             </View>
           </View>
 
-          {expandedOrders[item._id] && item.products && item.products.length > 0 && (
+          {expandedOrders[item._id] && item.cart?.products && item.cart.products.length > 0 && (
             <View style={styles.productsContainer}>
               <Text style={styles.sectionTitle}>Order Products</Text>
               <FlatList
-                data={item.products}
+                data={item.cart.products}
                 renderItem={renderProductItem}
-                keyExtractor={(product) => product._id}
+                keyExtractor={(product, index) => product._id || `${item._id}-product-${index}`}
                 scrollEnabled={false}
               />
             </View>
           )}
-  
+
           {item?.user && (
             <View style={styles.customerInfo}>
               <Text style={styles.sectionTitle}>Customer Information</Text>
-  
+
               {item?.user?.email && (
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Email:</Text>
                   <Text style={styles.infoValue}>{item.user.email}</Text>
                 </View>
               )}
-  
+
               {item?.user?.address && (
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Address:</Text>
                   <Text style={styles.infoValue}>{item.user.address}</Text>
                 </View>
               )}
-  
+
               {item?.user?.country && (
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Country:</Text>
                   <Text style={styles.infoValue}>{item.user.country}</Text>
                 </View>
               )}
-  
+
               {item?.user?.city && (
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>City:</Text>
                   <Text style={styles.infoValue}>{item.user.city}</Text>
                 </View>
               )}
-  
+
               {item?.user?.postalCode && (
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Post Code:</Text>
@@ -265,7 +291,7 @@ export default function TabTwoScreen() {
               )}
             </View>
           )}
-  
+
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={[styles.actionButton, styles.cancelButton]}
@@ -281,45 +307,45 @@ export default function TabTwoScreen() {
             </TouchableOpacity>
           </View>
           {item.paymentStatus === "Pending" && (
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.cancelButton]}
-              onPress={() => updatePaymentStatus(item._id, "Paid")}
-            >
-              <Text style={styles.buttonText}>Paid</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.rejectButton]}
-              onPress={() => updatePaymentStatus(item._id, "Failed")}
-            >
-              <Text style={styles.buttonText}>Failed</Text>
-            </TouchableOpacity>
-          </View>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.cancelButton]}
+                onPress={() => updatePaymentStatus(item._id, "Paid")}
+              >
+                <Text style={styles.buttonText}>Paid</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.rejectButton]}
+                onPress={() => updatePaymentStatus(item._id, "Failed")}
+              >
+                <Text style={styles.buttonText}>Failed</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
       </View>
     </View>
   );
-  
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Active Orders</Text>
       </View>
-  
+
       {loading && (
         <View style={styles.centeredContent}>
           <Text style={styles.loadingText}>Loading orders...</Text>
         </View>
       )}
-  
+
       {error && (
         <View style={styles.centeredContent}>
           <AntDesign name="exclamationcircle" size={24} color="red" />
           <Text style={styles.errorText}>{error}</Text>
         </View>
       )}
-  
+
       {!loading && !error && orders.length === 0 && (
         <View style={styles.centeredContent}>
           <AntDesign name="inbox" size={48} color="#888" />
@@ -329,7 +355,7 @@ export default function TabTwoScreen() {
           </Text>
         </View>
       )}
-  
+
       {!loading && !error && orders.length > 0 && (
         <FlatList
           data={orders}
@@ -348,6 +374,26 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white',
+  },
+  customDesignLabel: {
+    fontWeight: "bold",
+    color: "#333",
+    marginTop: 8,
+  },
+  customDesignImage: {
+    width: '100%',
+    height: 120,
+    marginTop: 4,
+    marginBottom: 8,
+    borderRadius: 4,
+  },
+  customDesignValue: {
+    color: "#444",
+    marginBottom: 4,
+  },
+  customDesignDescription: {
+    color: "#555",
+    fontStyle: "italic",
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -392,6 +438,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: 'black',
+  },
+  productThumbnail: {
+    width: 60,
+    height: 60,
+    borderRadius: 6,
+    backgroundColor: '#f5f5f5',
   },
   centeredContent: {
     flex: 1,
@@ -533,12 +585,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
-  },
-  productThumbnail: {
-    width: 60,
-    height: 60,
-    borderRadius: 6,
-    backgroundColor: '#f5f5f5',
   },
   productDetails: {
     flex: 1,

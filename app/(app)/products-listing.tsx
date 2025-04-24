@@ -21,12 +21,14 @@ import { useCart } from '../../components/cartcontext';
 import Toast from 'react-native-toast-message';
 
 // API Configuration
-const API_BASE_URL = 'https://ecommerce-app-backend-indol.vercel.app/api/products/get-all-products'; // Main API endpoint
-const IMAGE_BASE_URL = 'https://ecommerce-app-backend-indol.vercel.app/'; // Base URL for images
+const IMAGE_BASE_URL='http://localhost:3000/'
+const API_BASE_URL='http://localhost:3000/api/products/get-all-products'
+// const IMAGE_BASE_URL = 'https://ecommerce-app-backend-indol.vercel.app/'; 
+// const API_BASE_URL = 'https://ecommerce-app-backend-indol.vercel.app/api/get-all-products'; 
 
 // Get screen width for responsive design
 const { width, height } = Dimensions.get('window');
-const NUM_COLUMNS = 2; // Number of columns in the grid
+const NUM_COLUMNS = 2; 
 
 const ProductsScreen = () => {
   const [products, setProducts] = useState([]);
@@ -49,7 +51,6 @@ const ProductsScreen = () => {
   // Set the selected category when categories are loaded and category param exists
   useEffect(() => {
     if (categories.length > 0 && category) {
-      // Find the category ID that matches the passed category name
       const categoryItem = categories.find(cat => 
         cat.name.toLowerCase() === (category?.toLowerCase() || '')
       );
@@ -67,17 +68,15 @@ const ProductsScreen = () => {
         responseType: 'text'
       });
       
-      // Parse the special format response "se{...json...}"
       const jsonData = parseResponse(response.data);
       
       if (jsonData && jsonData.products) {
-        // Process the products array
+        // Process the products array with new colorImages handling
         const processedProducts = jsonData.products.map(product => ({
           ...product,
           id: product._id,
-          // Fix the image path handling
-          image: formatImageUrl(product.image),
-         
+          // Get the first available image (first color image or main image)
+          image: getFirstAvailableImage(product),
           color: parseArrayField(product.color),
           quality: parseArrayField(product.quality),
           size: parseArrayField(product.size)
@@ -99,6 +98,19 @@ const ProductsScreen = () => {
     }
   };
 
+  // Helper function to get first available image (color image or main image)
+  const getFirstAvailableImage = (product) => {
+    // If there are color images, use the first one
+    if (product.colorImages && typeof product.colorImages === 'object') {
+      const firstColor = Object.values(product.colorImages)[0];
+      if (firstColor) {
+        return formatImageUrl(firstColor);
+      }
+    }
+    // Fall back to main image
+    return formatImageUrl(product.image);
+  };
+
   const formatImageUrl = (imagePath) => {
     if (!imagePath) {
       return 'https://via.placeholder.com/150';
@@ -108,7 +120,6 @@ const ProductsScreen = () => {
       return imagePath;
     }
     
-    // Replace backslashes with forward slashes
     const normalizedPath = imagePath.replace(/\\/g, '/');
     
     const baseUrlWithoutTrailingSlash = IMAGE_BASE_URL.endsWith('/') 
@@ -130,7 +141,6 @@ const ProductsScreen = () => {
         return null;
       }
       
-      // Extract and parse the JSON part
       const jsonString = responseText.substring(jsonStartIndex);
       return JSON.parse(jsonString);
     } catch (error) {
@@ -143,7 +153,6 @@ const ProductsScreen = () => {
   const parseArrayField = (field) => {
     if (!field) return [];
     
-    // If already an array
     if (Array.isArray(field)) {
       if (field.length > 0 && typeof field[0] === 'string' && field[0].startsWith('[')) {
         try {
@@ -200,7 +209,6 @@ const ProductsScreen = () => {
 
   // Handle adding product to cart
   const handleAddToCart = async (product) => {
-    // Check for supplier conflict
     if (checkSupplierConflict(product.supplierId)) {
       Alert.alert(
         "Cannot Add Product",
@@ -209,7 +217,6 @@ const ProductsScreen = () => {
       return;
     }
     
-    // Add loading state for this specific product
     setAddingToCart({ status: true, productId: product._id || product.id });
     
     try {
@@ -236,13 +243,11 @@ const ProductsScreen = () => {
         });
       }
     } finally {
-      // Clear loading state
       setAddingToCart({ status: false, productId: null });
     }
   };
 
   const handleProductPress = (product) => {
-    // Only pass the product ID
     router.push({
       pathname: '/product-detail',
       params: { productId: product._id || product.id }
@@ -373,7 +378,6 @@ const ProductsScreen = () => {
     <SafeAreaView style={styles.container}>
       <NavigationHeader title="Products" />
       
-      {/* Use FlatList as main container instead of ScrollView for better performance and automatic chunking */}
       <FlatList
         data={[{ key: 'header' }]}
         keyExtractor={(item) => item.key}
@@ -414,7 +418,6 @@ const ProductsScreen = () => {
             {/* Products Grid */}
             {filteredProducts.length > 0 ? (
               <View style={styles.productsContainer}>
-                {/* Use chunks of 2 for the grid layout */}
                 {Array.from({ length: Math.ceil(filteredProducts.length / 2) }).map((_, rowIndex) => (
                   <View key={`row-${rowIndex}`} style={styles.productRow}>
                     {filteredProducts.slice(rowIndex * 2, rowIndex * 2 + 2).map((product) => (
@@ -439,7 +442,6 @@ const ProductsScreen = () => {
     </SafeAreaView>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

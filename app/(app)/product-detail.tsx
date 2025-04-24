@@ -23,9 +23,10 @@ import Toast from 'react-native-toast-message';
 import * as ImagePicker from 'react-native-image-picker';
 
 const { width } = Dimensions.get('window');
-const IMAGE_BASE_URL = 'https://ecommerce-app-backend-indol.vercel.app'; // Base URL for images
-const API_BASE_URL = 'https://ecommerce-app-backend-indol.vercel.app/api/products'; // Base API URL
-
+// const IMAGE_BASE_URL = 'https://ecommerce-app-backend-indol.vercel.app'; // Base URL for images
+// const API_BASE_URL = 'https://ecommerce-app-backend-indol.vercel.app/api/products'; // Base API URL
+const IMAGE_BASE_URL='http://localhost:3000'
+const API_BASE_URL='http://localhost:3000/api/products'
 
 const ProductDetail = () => {
   const navigation = useNavigation();
@@ -196,6 +197,51 @@ const ProductDetail = () => {
     return `${baseUrlWithoutTrailingSlash}/${pathWithoutLeadingSlash}`;
   };
   
+
+
+
+// Update the formatImageUrl function to handle color images
+// const formatImageUrl = (imagePath) => {
+//   if (!imagePath) {
+//     return 'https://via.placeholder.com/150';
+//   }
+  
+//   // If it's already a full URL
+//   if (imagePath.startsWith('http')) {
+//     return imagePath;
+//   }
+  
+//   // Replace backslashes with forward slashes
+//   const normalizedPath = imagePath.replace(/\\/g, '/');
+  
+//   // Make sure we don't have double slashes when joining paths
+//   const baseUrlWithoutTrailingSlash = IMAGE_BASE_URL.endsWith('/') 
+//     ? IMAGE_BASE_URL.slice(0, -1) 
+//     : IMAGE_BASE_URL;
+  
+//   const pathWithoutLeadingSlash = normalizedPath.startsWith('/') 
+//     ? normalizedPath.slice(1) 
+//     : normalizedPath;
+  
+//   return `${baseUrlWithoutTrailingSlash}/${pathWithoutLeadingSlash}`;
+// };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // Image upload functionality
   const uploadImage = () => {
     ImagePicker.launchImageLibrary(
@@ -268,20 +314,41 @@ const ProductDetail = () => {
       }
 
       // Create cart product object with supplierId and custom design details
-      const cartProduct = {
-        id: product._id,
-        name: product.name,
-        price: product.price,
-        color: selectedColor,
-        size: selectedSize,
-        quality: selectedQuality,
-        quantity: quantity,
-        image: product.image,
-        supplierId: product.supplierId,
-        customDesignPath: customDesignPath,
-        description: customDescription || '',
-        dateAdded: new Date().toISOString()
-      };
+      // const cartProduct = {
+      //   id: product._id,
+      //   name: product.name,
+      //   price: product.price,
+      //   color: selectedColor,
+      //   size: selectedSize,
+      //   quality: selectedQuality,
+      //   quantity: quantity,
+      //   image: product.image,
+      //   supplierId: product.supplierId,
+      //   customDesignPath: customDesignPath,
+      //   description: customDescription || '',
+      //   dateAdded: new Date().toISOString()
+      // };
+
+      // Update the handleAddToCart function to include the correct image
+const cartProduct = {
+  id: product._id,
+  name: product.name,
+  price: product.price,
+  color: selectedColor,
+  size: selectedSize,
+  quality: selectedQuality,
+  quantity: quantity,
+  image: product.colorImages && product.colorImages[selectedColor] 
+    ? product.colorImages[selectedColor] 
+    : product.image,
+  supplierId: product.supplierId,
+  customDesignPath: customDesignPath,
+  description: customDescription || '',
+  dateAdded: new Date().toISOString()
+};
+
+
+
 
       // Add the product to cart
       const success = await addToCart(cartProduct);
@@ -356,15 +423,26 @@ const ProductDetail = () => {
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Product Image */}
-        <View style={styles.imageContainer}>
+        {/* <View style={styles.imageContainer}>
           <Image
             source={{ uri: formatImageUrl(product.image) }}
             style={styles.productImage}
             resizeMode="cover"
             defaultSource={require('@/assets/images/product-placeholder.jpeg')}
           />
-        </View>
-        
+        </View> */}
+        <View style={styles.imageContainer}>
+  <Image
+    source={{ 
+      uri: product.colorImages && product.colorImages[selectedColor] 
+        ? formatImageUrl(product.colorImages[selectedColor]) 
+        : formatImageUrl(product.image)
+    }}
+    style={styles.productImage}
+    resizeMode="cover"
+    // defaultSource={require('@/assets/images/product-placeholder.jpeg')}
+  />
+</View>
         {/* Product Info */}
         <View style={styles.productInfoContainer}>
           <Text style={styles.productName}>{product.name}</Text>

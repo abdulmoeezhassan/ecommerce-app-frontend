@@ -18,7 +18,8 @@ import { useCart } from '../../components/cartcontext';
 import NavigationHeader from './navigation-header';
 import Toast from 'react-native-toast-message';
 
-const API_BASE_URL = 'https://ecommerce-app-backend-indol.vercel.app/api';
+// const API_BASE_URL = 'https://ecommerce-app-backend-indol.vercel.app/api';
+const API_BASE_URL='http://localhost:3000/api'; 
 
 const ShippingForm = () => {
   const router = useRouter();
@@ -172,7 +173,9 @@ const ShippingForm = () => {
         color: item.color || null,
         size: item.size || null,
         quality: item.quality || null,
-        price: item.price
+        price: item.price,
+        customDesignPath: item.customDesignPath || null, 
+        description: item.description || ''
       };
       
       // Add custom design data if present

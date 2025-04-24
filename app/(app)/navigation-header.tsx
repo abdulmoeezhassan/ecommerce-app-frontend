@@ -8,9 +8,9 @@ import {
   Text
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';  // Import useRouter from expo-router
-import { useCart } from '../../components/cartcontext';   // Import the useCart hook
-import AsyncStorage from '@react-native-async-storage/async-storage'; // For fetching image URL from local storage
+import { useRouter } from 'expo-router';  
+import { useCart } from '../../components/cartcontext';   
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
 import axios from 'axios';
 
 const API_BASE_URL = 'https://ecommerce-app-backend-indol.vercel.app/api/';

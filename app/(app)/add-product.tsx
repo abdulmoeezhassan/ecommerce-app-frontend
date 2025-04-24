@@ -21,8 +21,8 @@ import * as ImagePicker from "react-native-image-picker";
 import axios from "axios";
 import { Picker } from "@react-native-picker/picker";
 
-const API_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app";
-//  const API_BASE_URL = "http://localhost:3000"
+// const API_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app";
+ const API_BASE_URL = "http://localhost:3000"
 interface ImageAsset {
   uri: string;
   fileName?: string;

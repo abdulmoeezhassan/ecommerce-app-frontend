@@ -3,13 +3,13 @@ import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, Alert } fr
 import { Feather } from '@expo/vector-icons';
 import NavigationHeader from '../../navigation-header';
 import { useCart } from '../../../../components/cartcontext';
-import { useRouter } from 'expo-router'; // Changed from useNavigation to useRouter for Expo Router
+import { useRouter } from 'expo-router'; 
 
-const IMAGE_BASE_URL = 'https://ecommerce-app-backend-indol.vercel.app'; // Base URL for images
-
+// const IMAGE_BASE_URL = 'https://ecommerce-app-backend-indol.vercel.app'; // Base URL for images
+const IMAGE_BASE_URL='http://localhost:3000'
 const ShoppingCart = () => {
   const { cart, removeFromCart, increaseQuantity, decreaseQuantity, clearCart, getCartSupplierId } = useCart();
-  const router = useRouter(); // Use Expo Router for navigation
+  const router = useRouter(); 
 
   // Calculate total amount
   const totalAmount = cart.reduce((total, product) => {
@@ -27,10 +27,10 @@ const ShoppingCart = () => {
       return imagePath;
     }
     
-    // Replace backslashes with forward slashes
+
     const normalizedPath = imagePath.replace(/\\/g, '/');
     
-    // Make sure we don't have double slashes when joining paths
+
     const baseUrlWithoutTrailingSlash = IMAGE_BASE_URL.endsWith('/') 
       ? IMAGE_BASE_URL.slice(0, -1) 
       : IMAGE_BASE_URL;
@@ -93,7 +93,7 @@ const ShoppingCart = () => {
           <Text style={styles.emptyCartText}>Your cart is empty</Text>
           <TouchableOpacity 
             style={styles.continueShoppingButton}
-            onPress={() => router.push('/products-listing')} // Use Expo Router for navigation
+            onPress={() => router.push('/products-listing')} 
           >
             <Text style={styles.continueShoppingText}>Continue Shopping</Text>
           </TouchableOpacity>

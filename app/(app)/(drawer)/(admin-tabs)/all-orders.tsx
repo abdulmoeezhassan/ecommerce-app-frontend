@@ -292,7 +292,7 @@ export default function TabTwoScreen() {
             </View>
           )}
 
-          <View style={styles.buttonContainer}>
+          {/* <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={[styles.actionButton, styles.cancelButton]}
               onPress={() => updateOrderStatus(item._id, "Delivered")}
@@ -321,7 +321,7 @@ export default function TabTwoScreen() {
                 <Text style={styles.buttonText}>Failed</Text>
               </TouchableOpacity>
             </View>
-          )}
+          )} */}
         </View>
       </View>
     </View>

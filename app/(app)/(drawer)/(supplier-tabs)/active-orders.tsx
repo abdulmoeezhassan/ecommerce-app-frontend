@@ -160,7 +160,7 @@ export default function TabTwoScreen() {
           <>
             <Text style={styles.customDesignLabel}>Custom Design:</Text>
             <Image
-              source={{ uri: `data:image/jpeg;base64,${item.customDesignPath}` }}
+              source={{ uri: item.customDesignPath }}
               style={styles.customDesignImage}
               resizeMode="contain"
             />

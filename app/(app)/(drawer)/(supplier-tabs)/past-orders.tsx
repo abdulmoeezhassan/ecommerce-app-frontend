@@ -8,10 +8,10 @@ import { AntDesign } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 
-const API_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app/api";
-// const API_BASE_URL = "http://localhost:3000/api"
-// const IMAGE_BASE_URL = "http://localhost:3000/";
-const IMAGE_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app/";
+// const API_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app/api";
+const API_BASE_URL = "http://localhost:3000/api"
+const IMAGE_BASE_URL = "http://localhost:3000/";
+// const IMAGE_BASE_URL = "https://ecommerce-app-backend-indol.vercel.app/";
 
 export default function PastOrders() {
   const [orders, setOrders] = useState([]);
@@ -107,28 +107,52 @@ export default function PastOrders() {
     <View style={styles.productItem}>
       <Image
         source={
-          imageErrors[item._id] || !item.image
+          imageErrors[item._id] || !item.productImage
             ? require("@/assets/images/product-placeholder.jpeg")
-            : { uri: formatImageUrl(item.image) }
+            : { uri: item.productImage }
         }
         style={styles.productThumbnail}
-        resizeMode="contain"
+        resizeMode="cover"
         onError={() => {
           setImageErrors(prev => ({ ...prev, [item._id]: true }));
         }}
       />
       <View style={styles.productDetails}>
-        <ThemedText style={styles.productName}>{item.name}</ThemedText>
-        <ThemedText style={styles.productCategory}>{item.category}</ThemedText>
+        <Text style={styles.productName}>Product #{item.productId.substring(0, 8)}</Text>
+        <Text style={styles.productCategory}>Quantity: {item.quantity}</Text>
         <View style={styles.productSpecs}>
-          <ThemedText style={styles.productSpec}>Size: {item.size?.toString().replace(/[\[\]"]/g, '')}</ThemedText>
-          <ThemedText style={styles.productSpec}>Color: {item.color?.toString().replace(/[\[\]"]/g, '')}</ThemedText>
-          <ThemedText style={styles.productPrice}>PKR {item.price}</ThemedText>
+          <Text style={styles.productSpec}>
+            Size: {item.size}
+          </Text>
+          <Text style={styles.productSpec}>
+            Color: {item.color}
+          </Text>
+          <Text style={styles.productSpec}>
+            Quality: {item.quality}
+          </Text>
+          <Text style={styles.productPrice}>PKR {item.price}</Text>
         </View>
+        {/* Custom Design Section */}
+        {item.customDesignPath && (
+          <>
+            <Text style={styles.customDesignLabel}>Custom Design:</Text>
+            <Image
+              source={{ uri: item.customDesignPath }}
+              style={styles.customDesignImage}
+              resizeMode="contain"
+            />
+          </>
+        )}
+
+        {item.description && (
+          <>
+            <Text style={styles.customDesignLabel}>Design Description:</Text>
+            <Text style={styles.customDesignDescription}>{item.description}</Text>
+          </>
+        )}
       </View>
     </View>
   );
-
   const renderOrderCard = ({ item }) => (
     <View style={styles.orderCard}>
       <View style={styles.cardHeader}>
@@ -190,17 +214,17 @@ export default function PastOrders() {
             </View>
           </View>
 
-          {expandedOrders[item._id] && item.products && item.products.length > 0 && (
-            <View style={styles.productsContainer}>
-              <ThemedText style={styles.sectionTitle}>Order Products</ThemedText>
-              <FlatList
-                data={item.products}
-                renderItem={renderProductItem}
-                keyExtractor={(product) => product._id}
-                scrollEnabled={false}
-              />
-            </View>
-          )}
+            {expandedOrders[item._id] && item.cart?.products && item.cart.products.length > 0 && (
+                   <View style={styles.productsContainer}>
+                     <Text style={styles.sectionTitle}>Order Products</Text>
+                     <FlatList
+                       data={item.cart.products}
+                       renderItem={renderProductItem}
+                       keyExtractor={(product, index) => product._id || `${item._id}-product-${index}`}
+                       scrollEnabled={false}
+                     />
+                   </View>
+                 )}
 
           {item?.user && (
             <View style={styles.customerInfo}>
@@ -299,6 +323,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 12,
+  },
+  customDesignLabel: {
+    fontWeight: "bold",
+    color: "#333",
+    marginTop: 8,
+  },
+  customDesignImage: {
+    width: '100%',
+    height: 120,
+    marginTop: 4,
+    marginBottom: 8,
+    borderRadius: 4,
+  },
+  customDesignValue: {
+    color: "#444",
+    marginBottom: 4,
+  },
+  customDesignDescription: {
+    color: "#555",
+    fontStyle: "italic",
   },
   actionButton: {
     flex: 1,
